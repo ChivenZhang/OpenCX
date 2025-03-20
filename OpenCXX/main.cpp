@@ -73,18 +73,19 @@ int main(int argc, char** argv)
 
 	auto input = READ_FILE(file);
 	if (input.empty()) return 0;
-
-	// TODO: Resolve the class metadata of source code
 	List<Field> fields, sFields;
 	List<Method> methods, sMethods;
+
+	// TODO: Resolve the class metadata
 
 	fields.push_back({.Name = "Name", .Type="String" });
 	sFields.push_back({.Name = "SName", .Type="String" });
 	methods.push_back({.Name = "Foo", .Type="String" });
 	sMethods.push_back({.Name = "SFoo", .Type="String" });
 
-	auto output = String(TEMPLATE_FILE);
+	// Assembly reflection metadata
 
+	auto output = String(TEMPLATE_FILE);
 	auto folder = std::filesystem::path(file).parent_path().generic_string();
 	auto baseName = std::filesystem::path(file).stem().generic_string();
 	auto fileName = std::filesystem::path(file).filename().generic_string();
