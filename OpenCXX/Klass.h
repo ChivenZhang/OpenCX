@@ -30,13 +30,26 @@
 #define TEMPLATE_SFIELD R"(m_SFields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<CallT<Raw<decltype(T::)" META_NAME R"()>>>([]() { return &T::)" META_NAME R"(; }), } );
 )"
 
+/*
+ *	META_TYPE : "T1,T2,T3,..."
+ *	META_ARGS_TYPE: empty or ",T1,T2,T3,..."
+ *	META_ARGS_CALL:	empty or ",auto _1,auto _2,auto _3,..."
+ *	META_ARGS_PASS: empty or ",_1,_2,_3,..."
+ */
 #define TEMPLATE_METHOD R"(m_Methods.push_back(Method{.Name = ")" META_NAME R"(", .Type = "()" META_TYPE ")" R"(", .Access = ::New<CallT<)" META_RETURN ", Raw<T>" META_ARGS_TYPE R"(>>([](auto _0)" META_ARGS_CALL R"() { return _0->)" META_NAME "(" META_ARGS_PASS R"(); }), } );
 )"
 
+/*
+ *	META_TYPE : "T1,T2,T3,..."
+ *	META_ARGS_TYPE: empty or ",T1,T2,T3,..."
+ *	META_ARGS_CALL:	empty or "auto _1,auto _2,auto _3,..."
+ *	META_ARGS_PASS: empty or "_1,_2,_3,..."
+ */
 #define TEMPLATE_SMETHOD R"(m_SMethods.push_back(Method{.Name = ")" META_NAME R"(", .Type = "()" META_TYPE ")" R"(", .Access = ::New<CallT<)" META_RETURN META_ARGS_TYPE R"(>>([]()" META_ARGS_CALL R"() { return T::)" META_NAME "(" META_ARGS_PASS R"(); }), } );
 )"
 
 #define TEMPLATE_FILE R"(
+
 #pragma once
 #include ")" META_FILE R"("
 #ifndef META_)" META_CLASS R"(
