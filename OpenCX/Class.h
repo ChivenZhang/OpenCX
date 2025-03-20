@@ -1,10 +1,32 @@
 #pragma once
+/*=================================================
+* Copyright @ 2020-2025 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+* ====================History=======================
+* Created by ChivenZhang at 2025/03/20 22:07:38.
+*
+* =================================================*/
 #include "Public.h"
 
 class Call
 {
 public:
     virtual ~Call() = default;
+};
+
+template<class R, class... Args>
+class CallT : public Call
+{
+public:
+    explicit CallT(Lambda<R(Args...)> func) : m_Lambda(func) {}
+
+    R call(Args... args) { return m_Lambda(args...); }
+
+protected:
+    Lambda<R(Args...)> m_Lambda;
 };
 
 class Field

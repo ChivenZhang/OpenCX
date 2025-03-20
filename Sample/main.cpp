@@ -1,12 +1,9 @@
 #include <iostream>
-#include "MyObject.h"
+#include "MyObject.meta.h"
 
 int main()
 {
     auto obj = ClassT<MyObject>::New();
-
-    auto fields = obj->getClass()->getFields();
-    auto methods = obj->getClass()->getMethods();
 
     ClassT<MyObject>::Call<void>("Foo(String)", obj.get(), String("Hello"));
     ClassT<MyObject>::SCall<void>("SFoo(String)", String("World"));
@@ -16,6 +13,5 @@ int main()
     auto sname = ClassT<MyObject>::SGet<String>("SName");
     PRINT("get SName:", *sname);
 
-    Recycle::Get().clear();
     return 0;
 }

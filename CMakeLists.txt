@@ -11,6 +11,8 @@ option(OPENCX_ENABLE_SAMPLE "Enable Sample Compile" OFF)
 
 include_directories(${OPENCX_SOURCE_DIR})
 add_subdirectory(OpenCX)
+add_subdirectory(OpenCXX)
+add_subdirectory(External/OpenARGS)
 if(OPENCX_ENABLE_SAMPLE)
 add_subdirectory(Sample)
 endif()

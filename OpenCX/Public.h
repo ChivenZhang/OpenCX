@@ -1,4 +1,14 @@
 #pragma once
+/*=================================================
+* Copyright @ 2020-2025 ChivenZhang.
+* All Rights Reserved.
+* =====================Note=========================
+*
+*
+* ====================History=======================
+* Created by ChivenZhang at 2025/03/20 22:07:38.
+*
+* =================================================*/
 #include <iostream>
 #include <algorithm>
 #include <string>
