@@ -15,12 +15,12 @@ CLASS(MyObject)
 
     METHOD(void, Foo, String name)
     {
-        PRINT("Foo ", name);
+        PRINT("call Foo:", name);
     }
 
     SMETHOD(void, SFoo, String name)
     {
-        PRINT("SFoo ", name);
+        PRINT("call SFoo:", name);
     }
 };
 String MyObject::SName = "SMyObject";

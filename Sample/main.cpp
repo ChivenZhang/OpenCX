@@ -12,9 +12,9 @@ int main()
     ClassT<MyObject>::SCall<void>("SFoo(String)", String("World"));
 
     auto name = ClassT<MyObject>::Get<String>("Name", obj.get());
-    PRINT(*name);
+    PRINT("get Name:", *name);
     auto sname = ClassT<MyObject>::SGet<String>("SName");
-    PRINT(*sname);
+    PRINT("get SName:", *sname);
 
     Recycle::Get().clear();
     return 0;

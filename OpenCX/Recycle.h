@@ -12,26 +12,13 @@ public:
 class Recycle
 {
 public:
-    static Recycle& Get()
-    {
-        static Recycle s_Instance;
-        return s_Instance;
-    }
+    static Recycle& Get();
 
-    void mark(float time)
-    {
+    void mark(float time);
 
-    }
+    void sweep(float time);
 
-    void sweep(float time)
-    {
-
-    }
-
-    void clear()
-    {
-        m_ItemList.clear();
-    }
+    void clear();
 
     template<class T, class...Args>
     Ref<T> create(Args... args)
