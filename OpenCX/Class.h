@@ -48,7 +48,16 @@ public:
 class Class
 {
 public:
-    ListView<const Class> getBases() const
+    Class(String name) : m_Name(name)
+    {
+    }
+
+    String getName() const
+    {
+        return m_Name;
+    }
+
+    ListView<const Raw<Class>> getBases() const
     {
         return m_Bases;
     }
@@ -105,11 +114,9 @@ public:
         return true;
     }
 
-public:
-    String Name;
-
 protected:
-    List<Class> m_Bases;
-    List<Field> m_Fields, m_SFields;
+    String m_Name;
+    List<Raw<Class>> m_Bases;
+    List<Field> m_Fields, m_SFields; 
     List<Method> m_Methods, m_SMethods;
 };

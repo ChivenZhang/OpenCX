@@ -14,6 +14,26 @@
 #include <OpenARGS/OpenARGS.h>
 #include "Klass.h"
 
+using args_t = String;
+
+struct field_t
+{
+	String Name;
+	String Type;
+};
+
+struct method_t
+{
+	String Name;
+	String Type;
+	List<args_t> Args;
+};
+
+struct class_t
+{
+	String Name;
+};
+
 std::string READ_FILE(std::string path)
 {
 	std::ifstream file_reader(path);
@@ -73,15 +93,22 @@ int main(int argc, char** argv)
 
 	auto input = READ_FILE(file);
 	if (input.empty()) return 0;
-	List<Field> fields, sFields;
-	List<Method> methods, sMethods;
+	List<class_t> bases;
+	List<field_t> fields, sFields;
+	List<method_t> methods, sMethods;
 
 	// TODO: Resolve the class metadata
 
+	bases.push_back({.Name = "Object"});
+	bases.push_back({.Name = "MyBase"});
 	fields.push_back({.Name = "Name", .Type="String" });
 	sFields.push_back({.Name = "SName", .Type="String" });
-	methods.push_back({.Name = "Foo", .Type="String" });
-	sMethods.push_back({.Name = "SFoo", .Type="String" });
+	methods.push_back({.Name = "Foo", .Type = "void", .Args={"String", "float"} });
+	sMethods.push_back({.Name = "SFoo", .Type = "void", .Args={"String", "float"} });
+	fields.push_back({.Name = "Name2", .Type="String" });
+	sFields.push_back({.Name = "SName2", .Type="String" });
+	methods.push_back({.Name = "Foo2", .Type = "void", .Args={"String", "float"} });
+	sMethods.push_back({.Name = "SFoo2", .Type = "void", .Args={"String", "float"} });
 
 	// Assembly reflection metadata
 
@@ -95,12 +122,39 @@ int main(int argc, char** argv)
 	metaFile = fileName;
 	metaClass = baseName;
 
+	for (auto& e : bases)
+	{
+		String s(TEMPLATE_BASE);
+		s = STRING_REPLACE(s, META_NAME, e.Name);
+		metaBase += s;
+	}
+
 	for (auto& e : fields)
 	{
 		String s(TEMPLATE_FIELD);
 		s = STRING_REPLACE(s, META_NAME, e.Name);
 		s = STRING_REPLACE(s, META_TYPE, e.Type);
 		metaField += s;
+	}
+
+	for (auto& e : methods)
+	{
+		String s(TEMPLATE_METHOD);
+		s = STRING_REPLACE(s, META_NAME, e.Name);
+		s = STRING_REPLACE(s, META_RETURN, e.Type);
+		String _t;
+		for(auto& a : e.Args) _t += (_t.empty()?"":",") + a;
+		s = STRING_REPLACE(s, META_TYPE, _t);
+		String t;
+		for(auto& a : e.Args) t += "," + a;
+		s = STRING_REPLACE(s, META_ARGS_TYPE, t);
+		String tt;
+		for(size_t i=0; i<e.Args.size(); ++i) tt += "," + String("auto") + " " + "_" + std::to_string(1+i);
+		s = STRING_REPLACE(s, META_ARGS_CALL, tt);
+		String ttt;
+		for(size_t i=0; i<e.Args.size(); ++i) ttt += String(ttt.empty()?"":",") + "_" + std::to_string(1+i);
+		s = STRING_REPLACE(s, META_ARGS_PASS, ttt);
+		metaMethod += s;
 	}
 
 	for (auto& e : sFields)
@@ -111,27 +165,23 @@ int main(int argc, char** argv)
 		metaSField += s;
 	}
 
-	for (auto& e : methods)
-	{
-		String s(TEMPLATE_METHOD);
-		s = STRING_REPLACE(s, META_NAME, e.Name);
-		s = STRING_REPLACE(s, META_TYPE, e.Type);
-		s = STRING_REPLACE(s, META_RETURN, "void");
-		s = STRING_REPLACE(s, META_ARGS_TYPE, ", String");
-		s = STRING_REPLACE(s, META_ARGS_CALL, ", String _1");
-		s = STRING_REPLACE(s, META_ARGS_PASS, "_1");
-		metaMethod += s;
-	}
-
 	for (auto& e : sMethods)
 	{
 		String s(TEMPLATE_SMETHOD);
 		s = STRING_REPLACE(s, META_NAME, e.Name);
-		s = STRING_REPLACE(s, META_TYPE, e.Type);
-		s = STRING_REPLACE(s, META_RETURN, "void");
-		s = STRING_REPLACE(s, META_ARGS_TYPE, ", String");
-		s = STRING_REPLACE(s, META_ARGS_CALL, "String _1");
-		s = STRING_REPLACE(s, META_ARGS_PASS, "_1");
+		s = STRING_REPLACE(s, META_RETURN, e.Type);
+		String _t;
+		for(auto& a : e.Args) _t += (_t.empty()?"":",") + a;
+		s = STRING_REPLACE(s, META_TYPE, _t);
+		String t;
+		for(auto& a : e.Args) t += "," + a;
+		s = STRING_REPLACE(s, META_ARGS_TYPE, t);
+		String tt;
+		for(size_t i=0; i<e.Args.size(); ++i) tt += String(tt.empty()?"":",") + "auto" + " " + "_" + std::to_string(1+i);
+		s = STRING_REPLACE(s, META_ARGS_CALL, tt);
+		String ttt;
+		for(size_t i=0; i<e.Args.size(); ++i) ttt += String(ttt.empty()?"":",") + "_" + std::to_string(1+i);
+		s = STRING_REPLACE(s, META_ARGS_PASS, ttt);
 		metaSMethod += s;
 	}
 
@@ -145,5 +195,7 @@ int main(int argc, char** argv)
 
 	auto file2 = folder + "/" + baseName + ".meta.h";
 	WRITE_FILE(file2, output);
+
+	PRINT("succeed", file2);
 	return 0;
 }

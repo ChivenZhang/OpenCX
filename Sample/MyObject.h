@@ -17,23 +17,40 @@
 #define SFIELD(TYPE, NAME) public: static TYPE NAME
 #define SMETHOD(TYPE, NAME, ...) public: static TYPE NAME(__VA_ARGS__)
 
-CLASS(MyObject)
+class MyBase
 {
-    FIELD(String, Name) = "MyObject";
+};
+
+CLASS(MyObject, MyBase)
+{
+    FIELD(String, Name) = "Name";
+    FIELD(String, Name2) = "Name2";
 
     SFIELD(String, SName);
+    SFIELD(String, SName2);
 
-    METHOD(void, Foo, String name)
+    METHOD(void, Foo, String name, float data)
     {
-        PRINT("call Foo:", name);
+        PRINT("call Foo:", name, data);
     }
 
-    SMETHOD(void, SFoo, String name)
+    METHOD(void, Foo2, String name, float data)
     {
-        PRINT("call SFoo:", name);
+        PRINT("call Foo2:", name, data);
+    }
+
+    SMETHOD(void, SFoo, String name, float data)
+    {
+        PRINT("call SFoo:", name, data);
+    }
+
+    SMETHOD(void, SFoo2, String name, float data)
+    {
+        PRINT("call SFoo2:", name, data);
     }
 };
-String MyObject::SName = "SMyObject";
+String MyObject::SName = "SName";
+String MyObject::SName2 = "SName2";
 
 //#define META_MyObject
 // template<>
