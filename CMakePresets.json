@@ -9,6 +9,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+        "CLANG_BINARY_DIR": "F:/Software/clang+llvm-19.1.7-x86_64-pc-windows-msvc",
 
         "OPENCX_ENABLE_SAMPLE": "ON"
       }
@@ -21,6 +22,7 @@
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+        "CLANG_BINARY_DIR": "F:/Software/clang+llvm-19.1.7-x86_64-pc-windows-msvc",
 
         "OPENCX_ENABLE_SAMPLE": "ON"
       }

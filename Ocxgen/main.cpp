@@ -87,13 +87,14 @@ std::string STRING_REPLACE(std::string const& string, std::string const& target,
 	return result;
 }
 
-int ANALYSE_METADATA(String path);
+int ANALYSE_METADATA(String path, int argc, char** argv);
 int OUTPUT_METADATA(String path, clang_t const& meta);
+CXChildVisitResult TRAVERSE_METADATA(CXCursor current_cursor, CXCursor parent, CXClientData client_data);
 
 int main(int argc, char** argv)
 {
 	OpenARGS args(argc, argv);
-	if (args.items().size() <= 1)
+	if (args.items().size() < 2)
 	{
 		PRINT("no file input");
 		return 0;
@@ -104,21 +105,49 @@ int main(int argc, char** argv)
 		PRINT("file does not exist:", file);
 		return -1;
 	}
+	return ANALYSE_METADATA(file, argc, argv);
+}
 
-	/*
-	bases.push_back({.Name = "Object"});
-	bases.push_back({.Name = "MyBase"});
-	fields.push_back({.Name = "Name", .Type="String" });
-	sFields.push_back({.Name = "SName", .Type="String" });
-	methods.push_back({.Name = "Foo", .Type = "void", .Args={"String", "float"} });
-	sMethods.push_back({.Name = "SFoo", .Type = "void", .Args={"String", "float"} });
-	fields.push_back({.Name = "Name2", .Type="String" });
-	sFields.push_back({.Name = "SName2", .Type="String" });
-	methods.push_back({.Name = "Foo2", .Type = "void", .Args={"String", "float"} });
-	sMethods.push_back({.Name = "SFoo2", .Type = "void", .Args={"String", "float"} });
-	 */
-
-	return ANALYSE_METADATA(file);
+int ANALYSE_METADATA(String file, int argc, char** argv)
+{
+	auto index = clang_createIndex(0, 0); //Create index
+	auto unit = clang_parseTranslationUnit(
+		index,
+		file.c_str(), argv, argc,
+		nullptr, 0,
+		CXTranslationUnit_None
+	);
+	if (unit == nullptr)
+	{
+		PRINT("fail to parse translation unit");
+		return -1;
+	}
+	auto diagnostics = clang_getNumDiagnostics(unit);
+	if (diagnostics != 0)
+	{
+		for (int i = 0; i != diagnostics; ++i)
+		{
+			auto diag = clang_getDiagnostic(unit, i);
+			auto type = clang_getDiagnosticSeverity(diag);
+			if (type == CXDiagnostic_Error)
+			{
+				ERROR( clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
+			}
+			else if (type == CXDiagnostic_Fatal)
+			{
+				ERROR( clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
+				return -1;
+			}
+			else PRINT( clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
+		}
+	}
+	clang_t meta;
+	auto cursor = clang_getTranslationUnitCursor(unit);
+	clang_visitChildren( cursor, TRAVERSE_METADATA, &meta);
+	clang_disposeTranslationUnit(unit);
+	clang_disposeIndex(index);
+	PRINT("succeed", file);
+	return 0;
 }
 
 int OUTPUT_METADATA(String file, clang_t const& meta)
@@ -215,58 +244,24 @@ int OUTPUT_METADATA(String file, clang_t const& meta)
 	return 0;
 }
 
-int ANALYSE_METADATA(String file)
+CXChildVisitResult TRAVERSE_METADATA(CXCursor current_cursor, CXCursor parent, CXClientData client_data)
 {
-	auto index = clang_createIndex(0, 0); //Create index
-	auto unit = clang_parseTranslationUnit(
-		index,
-		file.c_str(), nullptr, 0,
-		nullptr, 0,
-		CXTranslationUnit_None
-	);
-	if (unit == nullptr)
-	{
-		PRINT("fail to parse translation unit");
-		return -1;
-	}
-	//Obtain a cursor at the root of the translation unit
-	auto cursor = clang_getTranslationUnitCursor(unit);
-	// ===================================================================
-	clang_visitChildren(
-		cursor,
-		[](CXCursor current_cursor, CXCursor parent, CXClientData client_data)
-		{
-			CXType cursor_type = clang_getCursorType(current_cursor);
+	auto& meta = *(clang_t*)client_data;
 
-			CXString type_kind_spelling = clang_getTypeKindSpelling(cursor_type.kind);
-			std::cout << "Type Kind: " << clang_getCString(type_kind_spelling);
-			clang_disposeString(type_kind_spelling);
+	CXType cursor_type = clang_getCursorType(current_cursor);
+	CXString cursor_spelling = clang_getCursorSpelling(current_cursor);
+	CXSourceRange cursor_range = clang_getCursorExtent(current_cursor);
+	std::cout << "Cursor " << clang_getCString(cursor_spelling);
 
-			if (cursor_type.kind == CXType_Pointer || // If cursor_type is a pointer
-				cursor_type.kind == CXType_LValueReference || // or an LValue Reference (&)
-				cursor_type.kind == CXType_RValueReference)
-			{
-				// or an RValue Reference (&&),
-				CXType pointed_to_type = clang_getPointeeType(cursor_type); // retrieve the pointed-to type
+	CXFile file;
+	unsigned start_line, start_column, start_offset;
+	unsigned end_line, end_column, end_offset;
 
-				CXString pointed_to_type_spelling = clang_getTypeSpelling(pointed_to_type); // Spell out the entire
-				std::cout << "pointing to type: " << clang_getCString(pointed_to_type_spelling); // pointed-to type
-				clang_disposeString(pointed_to_type_spelling);
-			}
-			else if (cursor_type.kind == CXType_Record)
-			{
-				CXString type_spelling = clang_getTypeSpelling(cursor_type);
-				std::cout << ", namely " << clang_getCString(type_spelling);
-				clang_disposeString(type_spelling);
-			}
-			std::cout << "\n";
-			return CXChildVisit_Recurse;
-		},
-		nullptr
-	);
-	// ===================================================================
-	clang_disposeTranslationUnit(unit);
-	clang_disposeIndex(index);
-	PRINT("succeed", file);
-	return 0;
+	clang_getExpansionLocation(clang_getRangeStart(cursor_range), &file, &start_line, &start_column, &start_offset);
+	clang_getExpansionLocation(clang_getRangeEnd  (cursor_range), &file, &end_line  , &end_column  , &end_offset);
+	std::cout << " spanning lines " << start_line << " to " << end_line;
+	clang_disposeString(cursor_spelling);
+
+	std::cout << "\n";
+	return CXChildVisit_Recurse;
 }

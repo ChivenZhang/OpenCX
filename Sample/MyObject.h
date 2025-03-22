@@ -17,6 +17,12 @@
 #define SFIELD(TYPE, NAME) public: static TYPE NAME
 #define SMETHOD(TYPE, NAME, ...) public: static TYPE NAME(__VA_ARGS__)
 
+struct foo
+{
+	int bar;
+	int* bar_pointer;
+};
+
 class MyBase
 {
 };
@@ -53,10 +59,9 @@ CLASS(MyObject, MyBase)
 String MyObject::SName = "SName";
 String MyObject::SName2 = "SName2";
 
-#if 1
+#if 0
 
 #define META_MyObject
-
 template <>
 class ClassT<MyObject> : public Class
 {

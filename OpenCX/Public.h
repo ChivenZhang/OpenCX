@@ -51,6 +51,19 @@ void PRINT(T first, Args... args)
     PRINT(args...);
 }
 
+template<class T>
+void ERROR(T value)
+{
+    std::cerr << value << std::endl;
+}
+
+template<class T, class... Args>
+void ERROR(T first, Args... args)
+{
+    std::cerr << first << " ";
+    ERROR(args...);
+}
+
 template<class T, class ... Args>
 inline Ref<T> New(Args&& ... args)
 {
