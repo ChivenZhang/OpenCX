@@ -42,6 +42,7 @@ template<class T>
 void PRINT(T value)
 {
     std::cout << value << std::endl;
+    std::fflush(stdout);
 }
 
 template<class T, class... Args>
@@ -55,6 +56,7 @@ template<class T>
 void ERROR(T value)
 {
     std::cerr << value << std::endl;
+    std::fflush(stderr);
 }
 
 template<class T, class... Args>

@@ -10,10 +10,10 @@
 * =================================================*/
 #include <fstream>
 #include <filesystem>
-#include <clang-c/Index.h>
 #include <OpenCX/Object.h>
 #include <OpenARGS/OpenARGS.h>
 #include "Klass.h"
+#include <clang-c/Index.h>
 
 struct class_t
 {
@@ -38,10 +38,18 @@ struct method_t
 struct clang_t
 {
 	class_t Class;
+	uint32_t Depth = 0;
 	List<class_t> Bases;
 	List<field_t> Fields, SFields;
 	List<method_t> Methods, SMethods;
 };
+
+std::ostream& operator<<(std::ostream& stream, const CXString& str)
+{
+	stream << clang_getCString(str);
+	clang_disposeString(str);
+	return stream;
+}
 
 String CX_READ_FILE(String path);
 bool CX_WRITE_FILE(String path, String content);
@@ -111,16 +119,18 @@ String CX_REPLACE_STR(String const& string, String const& target, String const& 
 
 int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 {
-	auto index = clang_createIndex(0, 0); //Create index
-	auto unit = clang_parseTranslationUnit(
+	auto index = clang_createIndex(0, 0);
+	CXTranslationUnit unit = nullptr;
+	auto code = clang_parseTranslationUnit2(
 		index,
 		file.c_str(), argv, argc,
 		nullptr, 0,
-		CXTranslationUnit_None
+		CXTranslationUnit_Incomplete | CXTranslationUnit_SkipFunctionBodies,
+		&unit
 	);
-	if (unit == nullptr)
+	if (code)
 	{
-		PRINT("fail to parse translation unit");
+		PRINT("fail to parse translation unit", code);
 		return -1;
 	}
 	auto diagnostics = clang_getNumDiagnostics(unit);
@@ -143,8 +153,8 @@ int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 		}
 	}
 	clang_t meta;
-	auto cursor = clang_getTranslationUnitCursor(unit);
-	clang_visitChildren( cursor, CX_TRAVERSE_METADATA, &meta);
+	auto root = clang_getTranslationUnitCursor(unit);
+	clang_visitChildren(root, CX_TRAVERSE_METADATA, &meta);
 	clang_disposeTranslationUnit(unit);
 	clang_disposeIndex(index);
 	PRINT("succeed", file);
@@ -248,21 +258,37 @@ int CX_OUTPUT_METADATA(String file, clang_t const& meta)
 CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor current_cursor, CXCursor parent, CXClientData client_data)
 {
 	auto& meta = *(clang_t*)client_data;
+    CXType cursor_type = clang_getCursorType(current_cursor);
 
-	CXType cursor_type = clang_getCursorType(current_cursor);
-	CXString cursor_spelling = clang_getCursorSpelling(current_cursor);
-	CXSourceRange cursor_range = clang_getCursorExtent(current_cursor);
-	std::cout << "Cursor " << clang_getCString(cursor_spelling);
+	auto result = CXChildVisit_Break;
+	switch (clang_getCursorKind(current_cursor))
+	{
+	case CXCursor_ClassDecl:
+		{
+			std::cout << "Struct '" << clang_getCString(clang_getCursorSpelling(current_cursor)) << "'\n";
+			result = CXChildVisit_Recurse;
+		} break;
+	case CXCursor_StructDecl:
+		{
+			std::cout << "Class '" << clang_getCString(clang_getCursorSpelling(current_cursor)) << "'\n";
+			result = CXChildVisit_Recurse;
+		} break;
+	case CXCursor_FieldDecl:
+		{
+			std::cout << "\tField '" << clang_getCursorSpelling(current_cursor) << "'\n";
+			result = CXChildVisit_Continue;
+		} break;
+	case CXCursor_CXXMethod:
+		{
+			std::cout << "\tMethod '" << clang_getCursorSpelling(current_cursor) << "'\n";
+			result = CXChildVisit_Continue;
+		} break;
+	default:
+		{
+			// std::cout << clang_getCursorSpelling(current_cursor) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(current_cursor)) << "'\n";
+			result = CXChildVisit_Recurse;
+		} break;
+	}
 
-	CXFile file;
-	unsigned start_line, start_column, start_offset;
-	unsigned end_line, end_column, end_offset;
-
-	clang_getExpansionLocation(clang_getRangeStart(cursor_range), &file, &start_line, &start_column, &start_offset);
-	clang_getExpansionLocation(clang_getRangeEnd  (cursor_range), &file, &end_line  , &end_column  , &end_offset);
-	std::cout << " spanning lines " << start_line << " to " << end_line;
-	clang_disposeString(cursor_spelling);
-
-	std::cout << "\n";
-	return CXChildVisit_Recurse;
+	return result;
 }
