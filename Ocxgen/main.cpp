@@ -8,8 +8,9 @@
 * Created by ChivenZhang at 2025/03/20 22:07:38.
 *
 * =================================================*/
-#include <filesystem>
 #include <fstream>
+#include <filesystem>
+#include <clang-c/Index.h>
 #include <OpenCX/Object.h>
 #include <OpenARGS/OpenARGS.h>
 #include "Klass.h"
@@ -34,6 +35,16 @@ struct class_t
 	String Name;
 };
 
+struct clang_t
+{
+	class_t Class;
+	List<class_t> Bases;
+	List<field_t> Fields;
+	List<method_t> Methods;
+	List<field_t> SFields;
+	List<method_t> SMethods;
+};
+
 std::string READ_FILE(std::string path)
 {
 	std::ifstream file_reader(path);
@@ -50,7 +61,7 @@ std::string READ_FILE(std::string path)
 
 bool WRITE_FILE(std::string path, std::string content)
 {
-	std::ofstream file_writer(path);
+	std::ofstream file_writer(path, std::ios::app);
 	if (file_writer.is_open())
 	{
 		file_writer << content;
@@ -76,6 +87,9 @@ std::string STRING_REPLACE(std::string const& string, std::string const& target,
 	return result;
 }
 
+int ANALYSE_METADATA(String path);
+int OUTPUT_METADATA(String path, clang_t const& meta);
+
 int main(int argc, char** argv)
 {
 	OpenARGS args(argc, argv);
@@ -91,14 +105,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	auto input = READ_FILE(file);
-	if (input.empty()) return 0;
-	List<class_t> bases;
-	List<field_t> fields, sFields;
-	List<method_t> methods, sMethods;
-
-	// TODO: Resolve the class metadata
-
+	/*
 	bases.push_back({.Name = "Object"});
 	bases.push_back({.Name = "MyBase"});
 	fields.push_back({.Name = "Name", .Type="String" });
@@ -109,8 +116,16 @@ int main(int argc, char** argv)
 	sFields.push_back({.Name = "SName2", .Type="String" });
 	methods.push_back({.Name = "Foo2", .Type = "void", .Args={"String", "float"} });
 	sMethods.push_back({.Name = "SFoo2", .Type = "void", .Args={"String", "float"} });
+	 */
 
-	// Assembly reflection metadata
+	return ANALYSE_METADATA(file);
+}
+
+int OUTPUT_METADATA(String file, clang_t const& meta)
+{
+	auto& bases = meta.Bases;
+	auto& fields = meta.Fields, &sFields = meta.SFields;
+	auto& methods = meta.Methods, &sMethods = meta.SMethods;
 
 	auto output = String(TEMPLATE_FILE);
 	auto folder = std::filesystem::path(file).parent_path().generic_string();
@@ -120,7 +135,7 @@ int main(int argc, char** argv)
 	String metaFile, metaClass, metaBase, metaField, metaMethod, metaSField, metaSMethod;
 
 	metaFile = fileName;
-	metaClass = baseName;
+	metaClass = meta.Class.Name;
 
 	for (auto& e : bases)
 	{
@@ -196,6 +211,62 @@ int main(int argc, char** argv)
 	auto file2 = folder + "/" + baseName + ".meta.h";
 	WRITE_FILE(file2, output);
 
-	PRINT("succeed", file2);
+	PRINT("output",  meta.Class.Name, "to", file2);
+	return 0;
+}
+
+int ANALYSE_METADATA(String file)
+{
+	auto index = clang_createIndex(0, 0); //Create index
+	auto unit = clang_parseTranslationUnit(
+		index,
+		file.c_str(), nullptr, 0,
+		nullptr, 0,
+		CXTranslationUnit_None
+	);
+	if (unit == nullptr)
+	{
+		PRINT("fail to parse translation unit");
+		return -1;
+	}
+	//Obtain a cursor at the root of the translation unit
+	auto cursor = clang_getTranslationUnitCursor(unit);
+	// ===================================================================
+	clang_visitChildren(
+		cursor,
+		[](CXCursor current_cursor, CXCursor parent, CXClientData client_data)
+		{
+			CXType cursor_type = clang_getCursorType(current_cursor);
+
+			CXString type_kind_spelling = clang_getTypeKindSpelling(cursor_type.kind);
+			std::cout << "Type Kind: " << clang_getCString(type_kind_spelling);
+			clang_disposeString(type_kind_spelling);
+
+			if (cursor_type.kind == CXType_Pointer || // If cursor_type is a pointer
+				cursor_type.kind == CXType_LValueReference || // or an LValue Reference (&)
+				cursor_type.kind == CXType_RValueReference)
+			{
+				// or an RValue Reference (&&),
+				CXType pointed_to_type = clang_getPointeeType(cursor_type); // retrieve the pointed-to type
+
+				CXString pointed_to_type_spelling = clang_getTypeSpelling(pointed_to_type); // Spell out the entire
+				std::cout << "pointing to type: " << clang_getCString(pointed_to_type_spelling); // pointed-to type
+				clang_disposeString(pointed_to_type_spelling);
+			}
+			else if (cursor_type.kind == CXType_Record)
+			{
+				CXString type_spelling = clang_getTypeSpelling(cursor_type);
+				std::cout << ", namely " << clang_getCString(type_spelling);
+				clang_disposeString(type_spelling);
+			}
+			std::cout << "\n";
+			return CXChildVisit_Recurse;
+		},
+		nullptr
+	);
+	// ===================================================================
+	clang_disposeTranslationUnit(unit);
+	clang_disposeIndex(index);
+	PRINT("succeed", file);
 	return 0;
 }

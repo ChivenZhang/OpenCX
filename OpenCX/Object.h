@@ -19,24 +19,6 @@ public:
     virtual Raw<Class> getClass() const = 0;
 };
 
-#include "Recycle.h"
-
-template<class T>
-class ClassT : public virtual Class
-{
-public:
-    static Raw<Class> Get()
-    {
-        return Raw<Class>();
-    }
-
-    template<class... Args>
-    static Ref<T> New(Args... args)
-    {
-        return Ref<T>();
-    }
-};
-
 template<class T>
 class ObjectT : public virtual Object
 {
@@ -51,3 +33,5 @@ public:
         return ClassT<T>::Get();
     }
 };
+
+#include "Recycle.h"

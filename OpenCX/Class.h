@@ -120,3 +120,17 @@ protected:
     List<Field> m_Fields, m_SFields; 
     List<Method> m_Methods, m_SMethods;
 };
+
+template<class T>
+class ClassT : public virtual Class
+{
+public:
+    static Raw<Class> Get()
+    {
+        static ClassT s_Instance;
+        return &s_Instance;
+    }
+
+protected:
+    ClassT() : Class(typeid(T).name()) {}
+};
