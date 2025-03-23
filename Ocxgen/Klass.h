@@ -27,7 +27,7 @@
 #define TEMPLATE_BASE R"(		m_Bases.push_back(ClassT<)" META_NAME R"(>::Get());
 )"
 
-#define TEMPLATE_FIELD R"(		m_Fields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<CallT<Raw<decltype(T::)" META_NAME R"()>,Raw<T>>>([](auto _0) { return &_0->)" META_NAME R"(; }), } );
+#define TEMPLATE_FIELD R"(		m_Fields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<CallT<Raw<decltype(T::)" META_NAME R"()>,Raw<T>>>([](Raw<T> _0) { return &_0->)" META_NAME R"(; }), } );
 )"
 
 #define TEMPLATE_SFIELD R"(		m_SFields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<CallT<Raw<decltype(T::)" META_NAME R"()>>>([]() { return &T::)" META_NAME R"(; }), } );
@@ -39,7 +39,7 @@
  *	META_ARGS_CALL:	empty or ",auto _1,auto _2,auto _3,..."
  *	META_ARGS_PASS: empty or ",_1,_2,_3,..."
  */
-#define TEMPLATE_METHOD R"(		m_Methods.push_back(Method{.Name = ")" META_NAME R"(", .Type = "()" META_TYPE ")" R"(", .Access = ::New<CallT<)" META_RETURN ",Raw<T>" META_ARGS_TYPE R"(>>([](auto _0)" META_ARGS_CALL R"() { return _0->)" META_NAME "(" META_ARGS_PASS R"(); }), } );
+#define TEMPLATE_METHOD R"(		m_Methods.push_back(Method{.Name = ")" META_NAME R"(", .Type = "[)" META_TYPE "]" R"(", .Access = ::New<CallT<)" META_RETURN ",Raw<T>" META_ARGS_TYPE R"(>>([](Raw<T> _0)" META_ARGS_CALL R"() { return _0->)" META_NAME "(" META_ARGS_PASS R"(); }), } );
 )"
 
 /*
@@ -48,14 +48,15 @@
  *	META_ARGS_CALL:	empty or "auto _1,auto _2,auto _3,..."
  *	META_ARGS_PASS: empty or "_1,_2,_3,..."
  */
-#define TEMPLATE_SMETHOD R"(		m_SMethods.push_back(Method{.Name = ")" META_NAME R"(", .Type = "()" META_TYPE ")" R"(", .Access = ::New<CallT<)" META_RETURN META_ARGS_TYPE R"(>>([]()" META_ARGS_CALL R"() { return T::)" META_NAME "(" META_ARGS_PASS R"(); }), } );
+#define TEMPLATE_SMETHOD R"(		m_SMethods.push_back(Method{.Name = ")" META_NAME R"(", .Type = "[)" META_TYPE "]" R"(", .Access = ::New<CallT<)" META_RETURN META_ARGS_TYPE R"(>>([]()" META_ARGS_CALL R"() { return T::)" META_NAME "(" META_ARGS_PASS R"(); }), } );
+)"
+
+#define TEMPLATE_INCLUDE R"(
+#pragma once
+#include ")" META_FILE R"("
 )"
 
 #define TEMPLATE_FILE R"(
-
-#pragma once
-#include ")" META_FILE R"("
-#ifndef META_)" META_CLASS R"(
 
 template<>
 class ClassT<)" META_CLASS R"(> : public Class
@@ -63,7 +64,6 @@ class ClassT<)" META_CLASS R"(> : public Class
 public:
 	using T = )" META_CLASS R"(;
 
-public:
 	static Raw<Class> Get()
 	{
 		static ClassT s_Instance;
@@ -88,6 +88,19 @@ public:
 		return Raw<F>();
 	}
 
+	template <class F>
+	static bool Set(String name, Raw<T> obj, F const& value)
+	{
+		Field f;
+		if (Get()->getField(name, f))
+		{
+			auto func = Cast<CallT<Raw<F>, Raw<T>>>(f.Access);
+			if (func) (*func->call(obj)) = value;
+			if (func) return true;
+		}
+		return false;
+	}
+
 	template <class R, class... Args>
 	static R Call(String name, Raw<T> obj, Args... args)
 	{
@@ -109,7 +122,7 @@ public:
 	}
 
 	template <class F>
-	static Raw<F> SGet(String name)
+	static Raw<F> GetStatic(String name)
 	{
 		Field f;
 		if (Get()->getSField(name, f))
@@ -120,8 +133,21 @@ public:
 		return Raw<F>();
 	}
 
+	template <class F>
+	static bool SetStatic(String name, F const& value)
+	{
+		Field f;
+		if (Get()->getSField(name, f))
+		{
+			auto func = Cast<CallT<Raw<F>>>(f.Access);
+			if (func) (*func->call()) = value;
+			if (func) return true;
+		}
+		return false;
+	}
+
 	template <class R, class... Args>
-	static R SCall(String name, Args... args)
+	static R CallStatic(String name, Args... args)
 	{
 		static String argTypes[] = { String(ClassT<decltype(args)>::Get()->getName())... };
 		static String argsType = []()
@@ -151,5 +177,4 @@ protected:
     }
 };
 
-#endif
 )"

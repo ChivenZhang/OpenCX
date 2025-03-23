@@ -134,3 +134,17 @@ public:
 protected:
     ClassT() : Class(typeid(T).name()) {}
 };
+
+#define CLASST(NAME)\
+template<>\
+class ClassT<NAME> : public virtual Class\
+{\
+public:\
+    static Raw<Class> Get()\
+    {\
+        static ClassT s_Instance;\
+        return &s_Instance;\
+    }\
+protected:\
+    ClassT() : Class(#NAME) {}\
+}
