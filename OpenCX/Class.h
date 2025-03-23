@@ -10,6 +10,7 @@
 *
 * =================================================*/
 #include "Public.h"
+#include "Recycle.h"
 
 class Call
 {
@@ -44,6 +45,9 @@ public:
     String Type;
     Ref<Call> Access;
 };
+
+template<class T>
+class ClassT;
 
 class Class
 {
@@ -113,6 +117,108 @@ public:
         method = (*result);
         return true;
     }
+
+	template<class T>
+	static Raw<Class> Get()
+	{
+		return ClassT<T>::Get();
+	}
+
+	template <class T, class... Args>
+	static Ref<T> New(Args... args)
+	{
+		return Recycle::Get().create<T>(args...);
+	}
+
+	template <class T, class F>
+	static Raw<F> Get(String name, Raw<T> obj)
+	{
+		Field f;
+		if (Get<T>()->getField(name, f))
+		{
+			auto func = Cast<CallT<Raw<F>, Raw<T>>>(f.Access);
+			if (func) return func->call(obj);
+		}
+		return Raw<F>();
+	}
+
+	template <class T, class F>
+	static bool Set(String name, Raw<T> obj, F const& value)
+	{
+		Field f;
+		if (Get<T>()->getField(name, f))
+		{
+			auto func = Cast<CallT<Raw<F>, Raw<T>>>(f.Access);
+			if (func) (*func->call(obj)) = value;
+			if (func) return true;
+		}
+		return false;
+	}
+
+	template <class T, class R, class... Args>
+	static R Call(String name, Raw<T> obj, Args... args)
+	{
+		static const String argTypes[] = { String(ClassT<decltype(args)>::Get()->getName())... };
+		static const String argsType = []()
+		{
+			String result;
+			for (auto& argType : argTypes) result += (result.empty()?"":",") + argType;
+			return result;
+		}();
+
+		Method m;
+		if (Get<T>()->getMethod(name + "[" + argsType + "]", m))
+		{
+			auto func = Cast<CallT<R, Raw<T>, Args...>>(m.Access);
+			if (func) return func->call(obj, std::forward<Args>(args)...);
+		}
+		throw std::runtime_error("Method not found");
+	}
+
+	template <class T, class F>
+	static Raw<F> GetStatic(String name)
+	{
+		Field f;
+		if (Get<T>()->getSField(name, f))
+		{
+			auto func = Cast<CallT<Raw<F>>>(f.Access);
+			if (func) return func->call();
+		}
+		return Raw<F>();
+	}
+
+	template <class T, class F>
+	static bool SetStatic(String name, F const& value)
+	{
+		Field f;
+		if (Get<T>()->getSField(name, f))
+		{
+			auto func = Cast<CallT<Raw<F>>>(f.Access);
+			if (func) (*func->call()) = value;
+			if (func) return true;
+		}
+		return false;
+	}
+
+	template <class T, class R, class... Args>
+	static R CallStatic(String name, Args... args)
+	{
+		static const String argTypes[] = { String(ClassT<decltype(args)>::Get()->getName())... };
+		static const String argsType = []()
+		{
+			String result;
+			for (auto& argType : argTypes) result += (result.empty()?"":",") + argType;
+			return result;
+		}();
+
+		Method m;
+		if (Get<T>()->getSMethod(name + "[" + argsType + "]", m))
+		{
+			auto func = Cast<CallT<R, Args...>>(m.Access);
+			if (func) return func->call(std::forward<Args>(args)...);
+		}
+		throw std::runtime_error("Method not found");
+	}
 
 protected:
     String m_Name;

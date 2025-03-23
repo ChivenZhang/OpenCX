@@ -46,22 +46,22 @@ public:
 		int SubName = 123;
 	};
 
-	void Foo(String name, float data)
+	void Foo(String name)
 	{
-		PRINT("call Foo:", name, data);
+		PRINT("call Foo1:", name);
 	}
 
-	void Foo2(String name, float data)
+	void Foo(String name, float data)
 	{
 		PRINT("call Foo2:", name, data);
 	}
 
-	static void SFoo(String name, float data)
+	static void SFoo(String name)
 	{
-		PRINT("call SFoo:", name, data);
+		PRINT("call SFoo1:", name);
 	}
 
-	static void SFoo2(String name, float data)
+	static void SFoo(String name, float data)
 	{
 		PRINT("call SFoo2:", name, data);
 	}

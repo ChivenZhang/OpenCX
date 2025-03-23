@@ -6,19 +6,19 @@ CLASST(String);
 
 int main()
 {
-    auto obj = ClassT<MyObject>::New();
+    auto obj = Class::New<MyObject>();
 
-    PRINT("get Name:", *ClassT<MyObject>::Get<String>("Name", obj.get()));
-    PRINT("get SName:", *ClassT<MyObject>::GetStatic<String>("SName"));
+    Class::Set<MyObject, String>("Name", obj.get(), "你好");
+    Class::SetStatic<MyObject, String>("SName", "世界");
 
-    ClassT<MyObject>::Set<String>("Name", obj.get(), "你好");
-    ClassT<MyObject>::SetStatic<String>("SName", "世界");
+    PRINT("get Name:", *Class::Get<MyObject, String>("Name", obj.get()));
+    PRINT("get SName:", *Class::GetStatic<MyObject, String>("SName"));
 
-    PRINT("get Name:", *ClassT<MyObject>::Get<String>("Name", obj.get()));
-    PRINT("get SName:", *ClassT<MyObject>::GetStatic<String>("SName"));
+    Class::Call<MyObject, void, String>("Foo", obj.get(), "Hello");
+    Class::Call<MyObject, void, String, float>("Foo", obj.get(), "Hello", 123.0f);
 
-    ClassT<MyObject>::Call<void, String, float>("Foo", obj.get(), "Hello", 123.0f);
-    ClassT<MyObject>::CallStatic<void, String, float>("SFoo", "World", 456.0f);
+    Class::CallStatic<MyObject, void, String>("SFoo", "World");
+    Class::CallStatic<MyObject, void, String, float>("SFoo", "World", 456.0f);
 
     return 0;
 }
