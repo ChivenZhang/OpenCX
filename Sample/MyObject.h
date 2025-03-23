@@ -46,6 +46,11 @@ public:
 		int SubName = 123;
 	};
 
+	void Foo()
+	{
+		PRINT("call Foo");
+	}
+
 	void Foo(String name)
 	{
 		PRINT("call Foo1:", name);
@@ -54,6 +59,11 @@ public:
 	void Foo(String name, float data)
 	{
 		PRINT("call Foo2:", name, data);
+	}
+
+	static void SFoo()
+	{
+		PRINT("call SFoo");
 	}
 
 	static void SFoo(String name)

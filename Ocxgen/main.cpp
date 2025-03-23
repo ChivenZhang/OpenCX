@@ -271,7 +271,7 @@ String CX_OUTPUT_METADATA(String file, clang_t const& meta)
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
 		s = CX_REPLACE_STR(s, META_RETURN, e.Type);
 		String _t;
-		for(auto& a : e.Args) _t += (_t.empty()?"":",") + a;
+		for(auto& a : e.Args) _t += "|" + a;
 		s = CX_REPLACE_STR(s, META_TYPE, _t);
 		String t;
 		for(auto& a : e.Args) t += "," + a;
@@ -291,7 +291,7 @@ String CX_OUTPUT_METADATA(String file, clang_t const& meta)
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
 		s = CX_REPLACE_STR(s, META_RETURN, e.Type);
 		String _t;
-		for(auto& a : e.Args) _t += (_t.empty()?"":",") + a;
+		for(auto& a : e.Args) _t += "|" + a;
 		s = CX_REPLACE_STR(s, META_TYPE, _t);
 		String t;
 		for(auto& a : e.Args) t += "," + a;

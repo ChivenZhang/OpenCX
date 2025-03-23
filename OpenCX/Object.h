@@ -23,14 +23,14 @@ template<class T>
 class ObjectT : public virtual Object
 {
 public:
-    static Raw<Class> GetClass()
+    static Raw<ClassT<T>> GetClass()
     {
-        return ClassT<T>::Get();
+        return Class::Get<T>();
     }
 
     Raw<Class> getClass() const override
     {
-        return ClassT<T>::Get();
+        return Class::Get<T>();
     }
 };
 

@@ -15,111 +15,110 @@
 class Call
 {
 public:
-    virtual ~Call() = default;
+	virtual ~Call() = default;
 };
 
-template<class R, class... Args>
+template <class R, class... Args>
 class CallT : public Call
 {
 public:
-    explicit CallT(Lambda<R(Args...)> func) : m_Lambda(func) {}
+	explicit CallT(Lambda<R(Args...)> func) : m_Lambda(func)
+	{
+	}
 
-    R call(Args... args) { return m_Lambda(args...); }
+	R call(Args... args) { return m_Lambda(args...); }
 
 protected:
-    Lambda<R(Args...)> m_Lambda;
+	Lambda<R(Args...)> m_Lambda;
 };
 
 class Field
 {
 public:
-    String Name;
-    String Type;
-    Ref<Call> Access;
+	String Name;
+	String Type;
+	Ref<Call> Access;
 };
 
 class Method
 {
 public:
-    String Name;
-    String Type;
-    Ref<Call> Access;
+	String Name;
+	String Type;
+	String Return;
+	Ref<Call> Access;
 };
 
-template<class T>
+template <class T>
 class ClassT;
 
 class Class
 {
 public:
-    Class(String name) : m_Name(name)
-    {
-    }
+	String getName() const
+	{
+		return m_Name;
+	}
 
-    String getName() const
-    {
-        return m_Name;
-    }
+	ListView<const Raw<Class>> getBases() const
+	{
+		return m_Bases;
+	}
 
-    ListView<const Raw<Class>> getBases() const
-    {
-        return m_Bases;
-    }
+	ListView<const Field> getFields() const
+	{
+		return m_Fields;
+	}
 
-    ListView<const Field> getFields() const
-    {
-        return m_Fields;
-    }
+	ListView<const Method> getMethods() const
+	{
+		return m_Methods;
+	}
 
-    ListView<const Method> getMethods() const
-    {
-        return m_Methods;
-    }
+	bool getField(String name, Field& field) const
+	{
+		auto result = std::find_if(m_Fields.cbegin(), m_Fields.cend(), [&](Field const& e)-> bool { return e.Name == name; });
+		if (result == m_Fields.end()) return false;
+		field = (*result);
+		return true;
+	}
 
-    bool getField(String name, Field& field) const
-    {
-        auto result = std::find_if(m_Fields.cbegin(), m_Fields.cend(), [&](Field const& e)->bool{ return e.Name == name; });
-        if(result == m_Fields.end()) return false;
-        field = (*result);
-        return true;
-    }
+	bool getMethod(String name, Method& method) const
+	{
+		auto result = std::find_if(m_Methods.cbegin(), m_Methods.cend(), [&](Method const& e)-> bool { return e.Name + e.Type == name; });
+		if (result == m_Methods.cend()) return false;
+		method = (*result);
+		return true;
+	}
 
-    bool getMethod(String name, Method& method) const
-    {
-        auto result = std::find_if(m_Methods.cbegin(), m_Methods.cend(), [&](Method const& e)->bool{ return e.Name + e.Type == name; });
-        if(result == m_Methods.cend()) return false;
-        method = (*result);
-        return true;
-    }
+	ListView<const Field> getSFields() const
+	{
+		return m_SFields;
+	}
 
-    ListView<const Field> getSFields() const
-    {
-        return m_SFields;
-    }
+	ListView<const Method> getSMethods() const
+	{
+		return m_SMethods;
+	}
 
-    ListView<const Method> getSMethods() const
-    {
-        return m_SMethods;
-    }
+	bool getSField(String name, Field& field) const
+	{
+		auto result = std::find_if(m_SFields.cbegin(), m_SFields.cend(), [&](Field const& e)-> bool { return e.Name == name; });
+		if (result == m_SFields.end()) return false;
+		field = (*result);
+		return true;
+	}
 
-    bool getSField(String name, Field& field) const
-    {
-        auto result = std::find_if(m_SFields.cbegin(), m_SFields.cend(), [&](Field const& e)->bool{ return e.Name == name; });
-        if(result == m_SFields.end()) return false;
-        field = (*result);
-        return true;
-    }
+	bool getSMethod(String name, Method& method) const
+	{
+		auto result = std::find_if(m_SMethods.cbegin(), m_SMethods.cend(), [&](Method const& e)-> bool { return e.Name + e.Type == name; });
+		if (result == m_SMethods.cend()) return false;
+		method = (*result);
+		return true;
+	}
 
-    bool getSMethod(String name, Method& method) const
-    {
-        auto result = std::find_if(m_SMethods.cbegin(), m_SMethods.cend(), [&](Method const& e)->bool{ return e.Name + e.Type == name; });
-        if(result == m_SMethods.cend()) return false;
-        method = (*result);
-        return true;
-    }
-
-	template<class T>
-	static Raw<Class> Get()
+	template <class T>
+	static Raw<ClassT<T>> Get()
 	{
 		return ClassT<T>::Get();
 	}
@@ -158,16 +157,10 @@ public:
 	template <class T, class R, class... Args>
 	static R Call(String name, Raw<T> obj, Args... args)
 	{
-		static const String argTypes[] = { String(ClassT<decltype(args)>::Get()->getName())... };
-		static const String argsType = []()
-		{
-			String result;
-			for (auto& argType : argTypes) result += (result.empty()?"":",") + argType;
-			return result;
-		}();
+		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
 
 		Method m;
-		if (Get<T>()->getMethod(name + "[" + argsType + "]", m))
+		if (Get<T>()->getMethod(name + type, m))
 		{
 			auto func = Cast<CallT<R, Raw<T>, Args...>>(m.Access);
 			if (func) return func->call(obj, std::forward<Args>(args)...);
@@ -203,16 +196,10 @@ public:
 	template <class T, class R, class... Args>
 	static R CallStatic(String name, Args... args)
 	{
-		static const String argTypes[] = { String(ClassT<decltype(args)>::Get()->getName())... };
-		static const String argsType = []()
-		{
-			String result;
-			for (auto& argType : argTypes) result += (result.empty()?"":",") + argType;
-			return result;
-		}();
+		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
 
 		Method m;
-		if (Get<T>()->getSMethod(name + "[" + argsType + "]", m))
+		if (Get<T>()->getSMethod(name + type, m))
 		{
 			auto func = Cast<CallT<R, Args...>>(m.Access);
 			if (func) return func->call(std::forward<Args>(args)...);
@@ -221,24 +208,31 @@ public:
 	}
 
 protected:
-    String m_Name;
-    List<Raw<Class>> m_Bases;
-    List<Field> m_Fields, m_SFields; 
-    List<Method> m_Methods, m_SMethods;
+	Class(String name) : m_Name(name)
+	{
+	}
+
+protected:
+	String m_Name;
+	List<Raw<Class>> m_Bases;
+	List<Field> m_Fields, m_SFields;
+	List<Method> m_Methods, m_SMethods;
 };
 
-template<class T>
+template <class T>
 class ClassT : public virtual Class
 {
 public:
-    static Raw<Class> Get()
-    {
-        static ClassT s_Instance;
-        return &s_Instance;
-    }
+	static Raw<ClassT> Get()
+	{
+		static ClassT s_Instance;
+		return &s_Instance;
+	}
 
 protected:
-    ClassT() : Class(typeid(T).name()) {}
+	ClassT() : Class(typeid(T).name())
+	{
+	}
 };
 
 #define CLASST(NAME)\
@@ -246,7 +240,8 @@ template<>\
 class ClassT<NAME> : public virtual Class\
 {\
 public:\
-    static Raw<Class> Get()\
+	using T = NAME;\
+    static Raw<ClassT> Get()\
     {\
         static ClassT s_Instance;\
         return &s_Instance;\

@@ -39,7 +39,7 @@
  *	META_ARGS_CALL:	empty or ",auto _1,auto _2,auto _3,..."
  *	META_ARGS_PASS: empty or ",_1,_2,_3,..."
  */
-#define TEMPLATE_METHOD R"(		m_Methods.push_back(Method{.Name = ")" META_NAME R"(", .Type = "[)" META_TYPE "]" R"(", .Access = ::New<CallT<)" META_RETURN ",Raw<T>" META_ARGS_TYPE R"(>>([](Raw<T> _0)" META_ARGS_CALL R"() { return _0->)" META_NAME "(" META_ARGS_PASS R"(); }), } );
+#define TEMPLATE_METHOD R"(		m_Methods.push_back(Method{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Return = ")" META_RETURN R"(", .Access = ::New<CallT<)" META_RETURN ",Raw<T>" META_ARGS_TYPE R"(>>([](Raw<T> _0)" META_ARGS_CALL R"() { return _0->)" META_NAME "(" META_ARGS_PASS R"(); }), } );
 )"
 
 /*
@@ -48,7 +48,7 @@
  *	META_ARGS_CALL:	empty or "auto _1,auto _2,auto _3,..."
  *	META_ARGS_PASS: empty or "_1,_2,_3,..."
  */
-#define TEMPLATE_SMETHOD R"(		m_SMethods.push_back(Method{.Name = ")" META_NAME R"(", .Type = "[)" META_TYPE "]" R"(", .Access = ::New<CallT<)" META_RETURN META_ARGS_TYPE R"(>>([]()" META_ARGS_CALL R"() { return T::)" META_NAME "(" META_ARGS_PASS R"(); }), } );
+#define TEMPLATE_SMETHOD R"(		m_SMethods.push_back(Method{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Return = ")" META_RETURN R"(", .Access = ::New<CallT<)" META_RETURN META_ARGS_TYPE R"(>>([]()" META_ARGS_CALL R"() { return T::)" META_NAME "(" META_ARGS_PASS R"(); }), } );
 )"
 
 #define TEMPLATE_INCLUDE R"(
@@ -63,7 +63,7 @@ class ClassT<)" META_CLASS R"(> : public Class
 public:
 	using T = )" META_CLASS R"(;
 
-	static Raw<Class> Get()
+	static Raw<ClassT> Get()
 	{
 		static ClassT s_Instance;
 		return &s_Instance;

@@ -14,9 +14,11 @@ int main()
     PRINT("get Name:", *Class::Get<MyObject, String>("Name", obj.get()));
     PRINT("get SName:", *Class::GetStatic<MyObject, String>("SName"));
 
+    Class::Call<MyObject, void>("Foo", obj.get());
     Class::Call<MyObject, void, String>("Foo", obj.get(), "Hello");
     Class::Call<MyObject, void, String, float>("Foo", obj.get(), "Hello", 123.0f);
 
+    Class::CallStatic<MyObject, void>("SFoo");
     Class::CallStatic<MyObject, void, String>("SFoo", "World");
     Class::CallStatic<MyObject, void, String, float>("SFoo", "World", 456.0f);
 
