@@ -15,6 +15,8 @@
 #include <string_view>
 #include <memory>
 #include <vector>
+#include <map>
+#include <stack>
 #include <span>
 #include <functional>
 
@@ -28,6 +30,12 @@ using Hnd = std::weak_ptr<T>;
 
 template<class T>
 using List = std::vector<T>;
+
+template<class K, class T>
+using Map = std::map<K, T>;
+
+template<class T>
+using Stack = std::stack<T>;
 
 template<class T, std::size_t Extent = std::dynamic_extent>
 using ListView = std::span<T, Extent>;

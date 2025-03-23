@@ -22,15 +22,29 @@ namespace abc
 
 class MyBase
 {
+public:
+	static int Global1;
 };
+int MyBase::Global1 = 123;
 
-class MyObject : public ObjectT<MyObject>, public MyBase
+int Global2 = 321;
+
+using Base = MyBase;
+typedef MyBase Base2;
+
+class MyObject : public ObjectT<MyObject>, public Base, public abc::foo
 {
 public:
 	String Name = "Name";
 	String Name2 = "Name2";
 	static String SName;
 	static String SName2;
+
+	class SubObject
+	{
+	public:
+		int SubName = 123;
+	};
 
 	void Foo(String name, float data)
 	{

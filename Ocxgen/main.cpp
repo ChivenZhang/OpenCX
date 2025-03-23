@@ -8,6 +8,7 @@
 * Created by ChivenZhang at 2025/03/20 22:07:38.
 *
 * =================================================*/
+#include <assert.h>
 #include <fstream>
 #include <filesystem>
 #include <OpenCX/Object.h>
@@ -44,6 +45,12 @@ struct clang_t
 	List<method_t> Methods, SMethods;
 };
 
+struct context_t
+{
+	Stack<CXCursor> ASTree;
+	Map<String, clang_t> Classes;
+};
+
 std::ostream& operator<<(std::ostream& stream, const CXString& str)
 {
 	stream << clang_getCString(str);
@@ -54,9 +61,11 @@ std::ostream& operator<<(std::ostream& stream, const CXString& str)
 String CX_READ_FILE(String path);
 bool CX_WRITE_FILE(String path, String content);
 String CX_REPLACE_STR(String const& string, String const& target, String const& replacement);
-int CX_ANALYSE_METADATA(String path, int argc, char** argv);
-int CX_OUTPUT_METADATA(String path, clang_t const& meta);
-CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor current_cursor, CXCursor parent, CXClientData client_data);
+int CX_ANALYSE_METADATA(String file, int argc, char** argv);
+CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor node, CXCursor parent, CXClientData client);
+int CX_OUTPUT_METADATA(String file, clang_t const& meta);
+void CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
+void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 
 int main(int argc, char** argv)
 {
@@ -125,7 +134,7 @@ int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 		index,
 		file.c_str(), argv, argc,
 		nullptr, 0,
-		CXTranslationUnit_Incomplete | CXTranslationUnit_SkipFunctionBodies,
+		CXTranslationUnit_SkipFunctionBodies,
 		&unit
 	);
 	if (code)
@@ -152,13 +161,39 @@ int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 			else PRINT( clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
 		}
 	}
-	clang_t meta;
+	context_t context;
 	auto root = clang_getTranslationUnitCursor(unit);
-	clang_visitChildren(root, CX_TRAVERSE_METADATA, &meta);
+	clang_visitChildren(root, CX_TRAVERSE_METADATA, &context);
+	context.ASTree.pop();
+	assert(context.ASTree.empty());
 	clang_disposeTranslationUnit(unit);
 	clang_disposeIndex(index);
 	PRINT("succeed", file);
 	return 0;
+}
+
+CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor node, CXCursor parent, CXClientData client)
+{
+	auto& context = *static_cast<context_t*>(client);
+	auto& asTree = context.ASTree;
+
+	if (asTree.empty() == false && clang_equalCursors(clang_getCursorLexicalParent(asTree.top()), parent))
+	{
+		CX_EXIT_TRAVERSE(asTree.top(), clang_getCursorLexicalParent(asTree.top()), client);
+		asTree.pop();
+	}
+	else
+	{
+		while (asTree.empty() == false && clang_equalCursors(asTree.top(), parent) == 0)
+		{
+			CX_EXIT_TRAVERSE(asTree.top(), clang_getCursorLexicalParent(asTree.top()), client);
+			asTree.pop();
+		}
+	}
+	asTree.push(node);
+	CX_ENTER_TRAVERSE(node, parent, client);
+
+	return CXChildVisit_Recurse;
 }
 
 int CX_OUTPUT_METADATA(String file, clang_t const& meta)
@@ -255,40 +290,63 @@ int CX_OUTPUT_METADATA(String file, clang_t const& meta)
 	return 0;
 }
 
-CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor current_cursor, CXCursor parent, CXClientData client_data)
+void CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 {
-	auto& meta = *(clang_t*)client_data;
-    CXType cursor_type = clang_getCursorType(current_cursor);
+	printf("in %s %s\n", clang_getCString(clang_getCursorSpelling(node)), clang_getCString(clang_getCursorKindSpelling(clang_getCursorKind(node))));
+	// switch (node.kind)
+	// {
+	// case CXCursor_ClassDecl:
+	// 	{
+	// 		std::cout << "*Class '" << clang_getCString(clang_getCursorSpelling(node)) << "'\n";
+	// 	} break;
+	// case CXCursor_StructDecl:
+	// 	{
+	// 		std::cout << "*Struct '" << clang_getCString(clang_getCursorSpelling(node)) << "'\n";
+	// 	} break;
+	// case CXCursor_VarDecl:
+	// 	{
+	// 		if (parent.kind == CXCursor_ClassDecl)
+	// 		{
+	// 			std::cout << "\t*SField '" << clang_getCursorSpelling(node) << "'\n";
+	// 		}
+	// 		else
+	// 		{
+	// 			std::cout << clang_getCursorSpelling(node) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(node)) << "'\n";
+	// 		}
+	// 	} break;
+	// case CXCursor_FieldDecl:
+	// 	{
+	// 		std::cout << "\t*Field '" << clang_getCursorSpelling(node) << "'\n";
+	// 	} break;
+	// case CXCursor_CXXMethod:
+	// 	{
+	// 		if (clang_CXXMethod_isStatic(node))
+	// 		{
+	// 			std::cout << "\t*SMethod '" << clang_getCursorSpelling(node) << "'\n";
+	// 		}
+	// 		else
+	// 		{
+	// 			std::cout << "\t*Method '" << clang_getCursorSpelling(node) << "'\n";
+	// 		}
+	// 	} break;
+	// case CXCursor_TypeAliasDecl:
+	// 	{
+	// 		// using 别名
+	//
+	// 	} break;
+	// case CXCursor_TypedefDecl:
+	// 	{
+	// 		// typedef 别名
+	//
+	// 	} break;
+	// default:
+	// 	{
+	// 		std::cout << clang_getCursorSpelling(node) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(node)) << "'\n";
+	// 	} break;
+	// }
+}
 
-	auto result = CXChildVisit_Break;
-	switch (clang_getCursorKind(current_cursor))
-	{
-	case CXCursor_ClassDecl:
-		{
-			std::cout << "Struct '" << clang_getCString(clang_getCursorSpelling(current_cursor)) << "'\n";
-			result = CXChildVisit_Recurse;
-		} break;
-	case CXCursor_StructDecl:
-		{
-			std::cout << "Class '" << clang_getCString(clang_getCursorSpelling(current_cursor)) << "'\n";
-			result = CXChildVisit_Recurse;
-		} break;
-	case CXCursor_FieldDecl:
-		{
-			std::cout << "\tField '" << clang_getCursorSpelling(current_cursor) << "'\n";
-			result = CXChildVisit_Continue;
-		} break;
-	case CXCursor_CXXMethod:
-		{
-			std::cout << "\tMethod '" << clang_getCursorSpelling(current_cursor) << "'\n";
-			result = CXChildVisit_Continue;
-		} break;
-	default:
-		{
-			// std::cout << clang_getCursorSpelling(current_cursor) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(current_cursor)) << "'\n";
-			result = CXChildVisit_Recurse;
-		} break;
-	}
-
-	return result;
+void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
+{
+	printf("out %s %s\n", clang_getCString(clang_getCursorSpelling(node)), clang_getCString(clang_getCursorKindSpelling(clang_getCursorKind(node))));
 }
