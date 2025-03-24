@@ -1,6 +1,6 @@
 #include <iostream>
 #if 1
-#include "MyObject.meta.h"
+#include "main.meta.h"
 CLASST(float);
 CLASST(String);
 

@@ -16,6 +16,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <set>
 #include <stack>
 #include <span>
 #include <functional>
@@ -33,6 +34,9 @@ using List = std::vector<T>;
 
 template<class K, class T>
 using Map = std::map<K, T>;
+
+template<class T>
+using Set = std::set<T>;
 
 template<class T>
 using Stack = std::stack<T>;

@@ -51,8 +51,8 @@
 #define TEMPLATE_SMETHOD R"(		m_SMethods.push_back(Method{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Return = ")" META_RETURN R"(", .Access = ::New<FuncT<)" META_RETURN META_ARGS_TYPE R"(>>([]()" META_ARGS_CALL R"()->)" META_RETURN R"( { return T::)" META_NAME "(" META_ARGS_PASS R"(); }), });
 )"
 
-#define TEMPLATE_INCLUDE R"(
-#pragma once
+#define TEMPLATE_INCLUDE R"(#pragma once
+#include <OpenCX/Class.h>
 #include ")" META_FILE R"("
 )"
 
@@ -79,5 +79,4 @@ protected:
 )" META_SMETHOD R"(
     }
 };
-
 )"

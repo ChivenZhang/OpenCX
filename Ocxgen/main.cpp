@@ -48,6 +48,7 @@ struct clang_t
 struct context_t
 {
 	uint32_t Depth = 0;
+	Set<String> Outputs;
 	Stack<CXCursor> ASTree;
 	Map<String, clang_t> Classes;
 };
@@ -64,7 +65,7 @@ bool CX_WRITE_FILE(String path, String content);
 String CX_REPLACE_STR(String const& string, String const& target, String const& replacement);
 int CX_ANALYSE_METADATA(String file, String output, int argc, char** argv);
 CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor node, CXCursor parent, CXClientData client);
-String CX_OUTPUT_METADATA(String file, clang_t const& meta);
+String CX_OUTPUT_METADATA(clang_t const& meta);
 bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 
@@ -188,24 +189,10 @@ int CX_ANALYSE_METADATA(String file, String output, int argc, char** argv)
 	auto baseName = std::filesystem::path(file).stem().generic_string();
 	auto fileName = std::filesystem::path(file).filename().generic_string();
 
-	String content(TEMPLATE_INCLUDE);
-	content = CX_REPLACE_STR(content, META_FILE, "MyObject.h");
-	for (auto& meta : context.Classes)
-	{
-		content += CX_OUTPUT_METADATA(file, meta.second);
-	}
-
-	if (output.empty()) output = folder + "/" + baseName + ".meta.h";
-	std::ofstream file_writer(output);
-	if (file_writer.is_open())
-	{
-		file_writer << content;
-		file_writer.close();
-		PRINT("output to", output);
-		return 0;
-	}
-	PRINT("Failed to open file!" );
-	return -1;
+	String content("#pragma once\n");
+	for (auto& metaPath : context.Outputs) content += R"(#include ")" + metaPath + R"(")" + "\n";
+	CX_WRITE_FILE(folder + "/" + baseName + ".meta.h", content);
+	return 0;
 }
 
 CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor node, CXCursor parent, CXClientData client)
@@ -232,7 +219,7 @@ CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor node, CXCursor parent, CXClient
 	return result ? CXChildVisit_Recurse : CXChildVisit_Continue;
 }
 
-String CX_OUTPUT_METADATA(String file, clang_t const& meta)
+String CX_OUTPUT_METADATA(clang_t const& meta)
 {
 	auto& bases = meta.Bases;
 	auto& fields = meta.Fields, &sFields = meta.SFields;
@@ -476,6 +463,36 @@ void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 	case CXCursor_ClassDecl:
 		{
 			context.Depth -= 1;
+
+			if (clang_isCursorDefinition(node) == false) break;
+
+			auto name = clang_getCString(clang_getCursorSpelling(node));
+			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
+			auto& klass = context.Classes[type];
+
+			CXFile file;
+			unsigned line, column, offset;
+			CXSourceLocation location = clang_getCursorLocation(node);
+			clang_getFileLocation(location, &file, &line, &column, &offset);
+			CXString file_name = clang_getFileName(file);
+			auto path = clang_getCString(file_name);
+
+			auto folder = std::filesystem::path(path).parent_path().generic_string();
+			auto baseName = std::filesystem::path(path).stem().generic_string();
+			auto fileName = std::filesystem::path(path).filename().generic_string();
+
+			auto output = folder + "/" + baseName + ".meta.h";
+			if (context.Outputs.insert(output).second)
+			{
+				std::filesystem::remove(output);
+
+				String content(TEMPLATE_INCLUDE);
+				content = CX_REPLACE_STR(content, META_FILE, fileName);
+				CX_WRITE_FILE(output, content);
+			}
+
+			auto content = CX_OUTPUT_METADATA(klass);
+			CX_APPEND_FILE(output, content);
 		} break;
 	default: break;
 	}
