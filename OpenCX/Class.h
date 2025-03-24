@@ -12,24 +12,24 @@
 #include "Public.h"
 #include "Recycle.h"
 
-class Call
+class Func
 {
 public:
-	virtual ~Call() = default;
+	virtual ~Func() = default;
 };
 
 template <class R, class... Args>
-class CallT : public Call
+class FuncT : public Func
 {
 public:
-	explicit CallT(Lambda<R(Args...)> func) : m_Lambda(func)
+	explicit FuncT(Lambda<R(Args...)> func) : m_Func(func)
 	{
 	}
 
-	R call(Args... args) { return m_Lambda(args...); }
+	R call(Args... args) { return m_Func(args...); }
 
 protected:
-	Lambda<R(Args...)> m_Lambda;
+	Lambda<R(Args...)> m_Func;
 };
 
 class Field
@@ -37,7 +37,7 @@ class Field
 public:
 	String Name;
 	String Type;
-	Ref<Call> Access;
+	Ref<Func> Access;
 };
 
 class Method
@@ -46,7 +46,7 @@ public:
 	String Name;
 	String Type;
 	String Return;
-	Ref<Call> Access;
+	Ref<Func> Access;
 };
 
 template <class T>
@@ -135,7 +135,7 @@ public:
 		Field f;
 		if (Get<T>()->getField(name, f))
 		{
-			auto func = Cast<CallT<Raw<F>, Raw<T>>>(f.Access);
+			auto func = Cast<FuncT<Raw<F>, Raw<T>>>(f.Access);
 			if (func) return func->call(obj);
 		}
 		return Raw<F>();
@@ -147,7 +147,7 @@ public:
 		Field f;
 		if (Get<T>()->getField(name, f))
 		{
-			auto func = Cast<CallT<Raw<F>, Raw<T>>>(f.Access);
+			auto func = Cast<FuncT<Raw<F>, Raw<T>>>(f.Access);
 			if (func) (*func->call(obj)) = value;
 			if (func) return true;
 		}
@@ -162,7 +162,7 @@ public:
 		Method m;
 		if (Get<T>()->getMethod(name + type, m))
 		{
-			auto func = Cast<CallT<R, Raw<T>, Args...>>(m.Access);
+			auto func = Cast<FuncT<R, Raw<T>, Args...>>(m.Access);
 			if (func) return func->call(obj, std::forward<Args>(args)...);
 		}
 		throw std::runtime_error("Method not found");
@@ -174,7 +174,7 @@ public:
 		Field f;
 		if (Get<T>()->getSField(name, f))
 		{
-			auto func = Cast<CallT<Raw<F>>>(f.Access);
+			auto func = Cast<FuncT<Raw<F>>>(f.Access);
 			if (func) return func->call();
 		}
 		return Raw<F>();
@@ -186,7 +186,7 @@ public:
 		Field f;
 		if (Get<T>()->getSField(name, f))
 		{
-			auto func = Cast<CallT<Raw<F>>>(f.Access);
+			auto func = Cast<FuncT<Raw<F>>>(f.Access);
 			if (func) (*func->call()) = value;
 			if (func) return true;
 		}
@@ -201,7 +201,7 @@ public:
 		Method m;
 		if (Get<T>()->getSMethod(name + type, m))
 		{
-			auto func = Cast<CallT<R, Args...>>(m.Access);
+			auto func = Cast<FuncT<R, Args...>>(m.Access);
 			if (func) return func->call(std::forward<Args>(args)...);
 		}
 		throw std::runtime_error("Method not found");

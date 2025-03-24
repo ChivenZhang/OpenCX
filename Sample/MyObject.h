@@ -29,10 +29,12 @@ int MyBase::Global1 = 123;
 
 int Global2 = 321;
 
+//typedef MyBase Base;
+//typedef Base Base2;
 using Base = MyBase;
-typedef MyBase Base2;
+using Base2 = Base;
 
-class MyObject : public ObjectT<MyObject>, public Base, public abc::foo
+class MyObject : public ObjectT<MyObject>, public Base2, public abc::foo
 {
 public:
 	String Name = "Name";
@@ -44,6 +46,7 @@ public:
 	{
 	public:
 		int SubName = 123;
+		static const int SSubName = 456;
 	};
 
 	void Foo()

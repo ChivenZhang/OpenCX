@@ -22,6 +22,10 @@ int main()
     Class::CallStatic<MyObject, void, String>("SFoo", "World");
     Class::CallStatic<MyObject, void, String, float>("SFoo", "World", 456.0f);
 
+    MyObject::SubObject sub;
+    PRINT("get SubObject::SubName:", *Class::Get<MyObject::SubObject, int>("SubName", &sub));
+    PRINT("get SubObject::SSubName:", *Class::GetStatic<MyObject::SubObject, const int>("SSubName"));
+
     return 0;
 }
 

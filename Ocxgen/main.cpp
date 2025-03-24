@@ -315,6 +315,20 @@ String CX_OUTPUT_METADATA(String file, clang_t const& meta)
 	return output;
 }
 
+CXCursor CX_RESOLVE_TYPE(CXCursor cursor)
+{
+	auto _cursor = clang_getCursorDefinition(cursor);
+	if (clang_isInvalid(_cursor.kind)) return cursor;
+
+	while (cursor.kind == CXCursor_TypedefDecl || cursor.kind == CXCursor_TypeAliasDecl || cursor.kind == CXCursor_TypeAliasTemplateDecl)
+	{
+		_cursor = clang_getTypeDeclaration(clang_getTypedefDeclUnderlyingType(cursor));
+		if (clang_isInvalidDeclaration(_cursor)) break;
+		cursor = _cursor;
+	}
+	return cursor;
+}
+
 bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 {
 	auto& context = *static_cast<context_t*>(client);
@@ -325,7 +339,7 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 	case CXCursor_StructDecl:
 		{
 			auto name = clang_getCString(clang_getCursorSpelling(node));
-			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(node)));
+			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
 			auto& klass = context.Classes[type];
 			klass.Class.Name = type;
 
@@ -337,7 +351,7 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 	case CXCursor_ClassDecl:
 		{
 			auto name = clang_getCString(clang_getCursorSpelling(node));
-			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(node)));
+			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
 			auto& klass = context.Classes[type];
 			klass.Class.Name = type;
 
@@ -349,15 +363,11 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 	case CXCursor_CXXBaseSpecifier:
 		{
 			auto name = clang_getCString(clang_getCursorSpelling(node));
-			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(node)));
-			auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(parent)));
+			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
+			auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
 			auto& klass = context.Classes[klassName];
 			auto& base = klass.Bases.emplace_back();
 			base.Name = type;
-		} break;
-	case CXCursor_CXXAccessSpecifier:
-		{
-			auto access = clang_getCXXAccessSpecifier(node);
 		} break;
 	case CXCursor_VarDecl:
 		{
@@ -366,8 +376,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 				if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
 				{
 					auto name = clang_getCString(clang_getCursorSpelling(node));
-					auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(node)));
-					auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(parent)));
+					auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
+					auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
 					auto& klass = context.Classes[klassName];
 
 					auto& field = klass.SFields.emplace_back();
@@ -385,8 +395,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
 			{
 				auto name = clang_getCString(clang_getCursorSpelling(node));
-				auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(node)));
-				auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(parent)));
+				auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
+				auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
 				auto& klass = context.Classes[klassName];
 
 				auto& field = klass.Fields.emplace_back();
@@ -403,22 +413,23 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
 			{
 				auto name = clang_getCString(clang_getCursorSpelling(node));
-				auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(node)));
-				auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(parent)));
+				auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
+				auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
 				auto& klass = context.Classes[klassName];
+
+				auto argsNum = clang_Cursor_getNumArguments(node);
+				auto resultType = clang_getCursorResultType(node);
+				auto returnType = clang_getCString(clang_getTypeSpelling(resultType));
 
 				if (clang_CXXMethod_isStatic(node))
 				{
-					auto argsNum = clang_Cursor_getNumArguments(node);
-					auto returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(node)));
-
 					auto& method = klass.SMethods.emplace_back();
 					method.Name = name;
 					method.Type = returnType;
 					for (auto i = 0; i < argsNum; ++i)
 					{
-						auto argType = clang_getCursorType(clang_Cursor_getArgument(node, i));
-						method.Args.emplace_back(clang_getCString(clang_getTypeSpelling(argType)));
+						auto argType = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(clang_Cursor_getArgument(node, i)))));
+						method.Args.emplace_back(argType);
 					}
 
 					for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
@@ -426,16 +437,13 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 				}
 				else
 				{
-					auto argsNum = clang_Cursor_getNumArguments(node);
-					auto returnType = clang_getCString(clang_getTypeSpelling(clang_getCursorResultType(node)));
-
 					auto& method = klass.Methods.emplace_back();
 					method.Name = name;
 					method.Type = returnType;
 					for (auto i = 0; i < argsNum; ++i)
 					{
-						auto argType = clang_getCursorType(clang_Cursor_getArgument(node, i));
-						method.Args.emplace_back(clang_getCString(clang_getTypeSpelling(argType)));
+						auto argType = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(clang_Cursor_getArgument(node, i)))));
+						method.Args.emplace_back(argType);
 					}
 
 					for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
@@ -444,22 +452,10 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			}
 			result = false;
 		} break;
-	case CXCursor_TypeAliasDecl:
-		{
-			// using 别名
-
-			result = false;
-		} break;
-	case CXCursor_TypedefDecl:
-		{
-			// typedef 别名
-
-			result = false;
-		} break;
 	default:
 		{
-			// for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
-			// std::cout << clang_getCursorSpelling(node) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(node)) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(parent)) << "\n";
+			//for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
+			//std::cout << clang_getCursorSpelling(node) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(node)) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(parent)) << "\n";
 			result = false;
 		} break;
 	}
