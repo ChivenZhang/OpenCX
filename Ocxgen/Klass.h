@@ -24,11 +24,16 @@
 #define META_ARGS_CALL "${ARGS_CALL}"
 #define META_ARGS_PASS "${ARGS_PASS}"
 
+#define TEMPLATE_INCLUDE R"(#pragma once
+#include <OpenCX/Class.h>
+#include ")" META_FILE R"("
+)"
+
 #define TEMPLATE_BASE R"(
 		m_Bases.push_back(ClassT<)" META_NAME R"(>::Get());)"
 
 #define TEMPLATE_FIELD R"(
-		m_Fields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<FuncT<Raw<decltype(T::)" META_NAME R"()>,Raw<T>>>([](Raw<T> _0) { return &_0->)" META_NAME R"(; }), } );)"
+		m_Fields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<FuncT<Raw<decltype(T::)" META_NAME R"()>,Raw<T> >>([](Raw<T> _0) { return &_0->)" META_NAME R"(; }), } );)"
 
 #define TEMPLATE_SFIELD R"(
 		m_SFields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<FuncT<Raw<decltype(T::)" META_NAME R"()>>>([]() { return &T::)" META_NAME R"(; }), } );)"
@@ -40,7 +45,7 @@
  *	META_ARGS_PASS: empty or ",_1,_2,_3,..."
  */
 #define TEMPLATE_METHOD R"(
-		m_Methods.push_back(Method{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Return = ")" META_RETURN R"(", .Access = ::New<FuncT<)" META_RETURN ",Raw<T>" META_ARGS_TYPE R"(>>([](Raw<T> _0)" META_ARGS_CALL R"()->)" META_RETURN R"( { return _0->)" META_NAME "(" META_ARGS_PASS R"(); }), });)"
+		m_Methods.push_back(Method{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Return = ")" META_RETURN R"(", .Access = ::New<FuncT<)" META_RETURN ",Raw<T>" META_ARGS_TYPE R"( >>([](Raw<T> _0)" META_ARGS_CALL R"()->)" META_RETURN R"( { return _0->)" META_NAME "(" META_ARGS_PASS R"(); }), });)"
 
 /*
  *	META_TYPE : "T1,T2,T3,..."
@@ -49,20 +54,13 @@
  *	META_ARGS_PASS: empty or "_1,_2,_3,..."
  */
 #define TEMPLATE_SMETHOD R"(
-		m_SMethods.push_back(Method{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Return = ")" META_RETURN R"(", .Access = ::New<FuncT<)" META_RETURN META_ARGS_TYPE R"(>>([]()" META_ARGS_CALL R"()->)" META_RETURN R"( { return T::)" META_NAME "(" META_ARGS_PASS R"(); }), });)"
-
-#define TEMPLATE_INCLUDE R"(#pragma once
-#include <OpenCX/Class.h>
-#include ")" META_FILE R"("
-)"
+		m_SMethods.push_back(Method{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Return = ")" META_RETURN R"(", .Access = ::New<FuncT<)" META_RETURN META_ARGS_TYPE R"( >>([]()" META_ARGS_CALL R"()->)" META_RETURN R"( { return T::)" META_NAME "(" META_ARGS_PASS R"(); }), });)"
 
 #define TEMPLATE_FILE R"(
 template<>
 class ClassT<)" META_CLASS R"(> : public Class
 {
 public:
-	using T = )" META_CLASS R"(;
-
 	static Raw<ClassT> Get()
 	{
 		static ClassT s_Instance;
@@ -71,7 +69,8 @@ public:
 
 protected:
 	ClassT() : Class(")" META_CLASS R"(")
-	{)" META_BASE META_FIELD META_METHOD META_SFIELD META_SMETHOD R"(
+	{
+		using T = )" META_CLASS R"(; )" META_BASE META_FIELD META_SFIELD META_METHOD META_SMETHOD R"(
 	}
 };
 )"

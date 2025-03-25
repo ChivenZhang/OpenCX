@@ -306,6 +306,7 @@ CXCursor CX_RESOLVE_TYPE(CXCursor cursor)
 {
 	auto _cursor = clang_getCursorDefinition(cursor);
 	if (clang_isInvalid(_cursor.kind)) return cursor;
+	cursor = _cursor;
 
 	while (cursor.kind == CXCursor_TypedefDecl || cursor.kind == CXCursor_TypeAliasDecl || cursor.kind == CXCursor_TypeAliasTemplateDecl)
 	{
