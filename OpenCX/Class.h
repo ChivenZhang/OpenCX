@@ -55,6 +55,102 @@ class ClassT;
 class Class
 {
 public:
+	template <class T>
+	static Raw<ClassT<T>> Get()
+	{
+		return ClassT<T>::Get();
+	}
+
+	template <class T, class... Args>
+	static Ref<T> New(Args... args)
+	{
+		return Recycle::Get().create<T>(0, args...);
+	}
+
+	template <class T, class F>
+	static Raw<F> Get(String name, Raw<T> obj)
+	{
+		Field f;
+		if (Get<T>()->getField(name, f))
+		{
+			auto func = Cast<FuncT<Raw<F>, Raw<T>>>(f.Access);
+			if (func) return func->call(obj);
+		}
+		return Raw<F>();
+	}
+
+	template <class T, class F>
+	static bool Set(String name, Raw<T> obj, F const& value)
+	{
+		Field f;
+		if (Get<T>()->getField(name, f))
+		{
+			auto func = Cast<FuncT<Raw<F>, Raw<T>>>(f.Access);
+			if (func) (*func->call(obj)) = value;
+			if (func) return true;
+		}
+		return false;
+	}
+
+	template <class T, class R, class... Args>
+	static R Call(String name, Raw<T> obj, Args... args)
+	{
+		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
+
+		Method m;
+		if (Get<T>()->getMethod(name + type, m))
+		{
+			auto func = Cast<FuncT<R, Raw<T>, Args...>>(m.Access);
+			if (func) return func->call(obj, std::forward<Args>(args)...);
+		}
+		throw std::runtime_error("Method not found");
+	}
+
+	template <class T, class... Args>
+	static Ref<T> NewStatic(Args... args)
+	{
+		return Recycle::Get().create<T>(1, args...);
+	}
+
+	template <class T, class F>
+	static Raw<F> GetStatic(String name)
+	{
+		Field f;
+		if (Get<T>()->getSField(name, f))
+		{
+			auto func = Cast<FuncT<Raw<F>>>(f.Access);
+			if (func) return func->call();
+		}
+		return Raw<F>();
+	}
+
+	template <class T, class F>
+	static bool SetStatic(String name, F const& value)
+	{
+		Field f;
+		if (Get<T>()->getSField(name, f))
+		{
+			auto func = Cast<FuncT<Raw<F>>>(f.Access);
+			if (func) (*func->call()) = value;
+			if (func) return true;
+		}
+		return false;
+	}
+
+	template <class T, class R, class... Args>
+	static R CallStatic(String name, Args... args)
+	{
+		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
+
+		Method m;
+		if (Get<T>()->getSMethod(name + type, m))
+		{
+			auto func = Cast<FuncT<R, Args...>>(m.Access);
+			if (func) return func->call(std::forward<Args>(args)...);
+		}
+		throw std::runtime_error("Method not found");
+	}
+
 	String getName() const
 	{
 		return m_Name;
@@ -115,96 +211,6 @@ public:
 		if (result == m_SMethods.cend()) return false;
 		method = (*result);
 		return true;
-	}
-
-	template <class T>
-	static Raw<ClassT<T>> Get()
-	{
-		return ClassT<T>::Get();
-	}
-
-	template <class T, class... Args>
-	static Ref<T> New(Args... args)
-	{
-		return Recycle::Get().create<T>(args...);
-	}
-
-	template <class T, class F>
-	static Raw<F> Get(String name, Raw<T> obj)
-	{
-		Field f;
-		if (Get<T>()->getField(name, f))
-		{
-			auto func = Cast<FuncT<Raw<F>, Raw<T>>>(f.Access);
-			if (func) return func->call(obj);
-		}
-		return Raw<F>();
-	}
-
-	template <class T, class F>
-	static bool Set(String name, Raw<T> obj, F const& value)
-	{
-		Field f;
-		if (Get<T>()->getField(name, f))
-		{
-			auto func = Cast<FuncT<Raw<F>, Raw<T>>>(f.Access);
-			if (func) (*func->call(obj)) = value;
-			if (func) return true;
-		}
-		return false;
-	}
-
-	template <class T, class R, class... Args>
-	static R Call(String name, Raw<T> obj, Args... args)
-	{
-		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
-
-		Method m;
-		if (Get<T>()->getMethod(name + type, m))
-		{
-			auto func = Cast<FuncT<R, Raw<T>, Args...>>(m.Access);
-			if (func) return func->call(obj, std::forward<Args>(args)...);
-		}
-		throw std::runtime_error("Method not found");
-	}
-
-	template <class T, class F>
-	static Raw<F> GetStatic(String name)
-	{
-		Field f;
-		if (Get<T>()->getSField(name, f))
-		{
-			auto func = Cast<FuncT<Raw<F>>>(f.Access);
-			if (func) return func->call();
-		}
-		return Raw<F>();
-	}
-
-	template <class T, class F>
-	static bool SetStatic(String name, F const& value)
-	{
-		Field f;
-		if (Get<T>()->getSField(name, f))
-		{
-			auto func = Cast<FuncT<Raw<F>>>(f.Access);
-			if (func) (*func->call()) = value;
-			if (func) return true;
-		}
-		return false;
-	}
-
-	template <class T, class R, class... Args>
-	static R CallStatic(String name, Args... args)
-	{
-		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
-
-		Method m;
-		if (Get<T>()->getSMethod(name + type, m))
-		{
-			auto func = Cast<FuncT<R, Args...>>(m.Access);
-			if (func) return func->call(std::forward<Args>(args)...);
-		}
-		throw std::runtime_error("Method not found");
 	}
 
 protected:

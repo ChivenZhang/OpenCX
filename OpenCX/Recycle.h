@@ -31,12 +31,12 @@ public:
     void clear();
 
     template<class T, class...Args>
-    Ref<T> create(Args... args)
+    Ref<T> create(uint32_t flags, Args... args)
     {
         auto result = std::make_shared<T>(args...);
         auto& item = m_ItemList.emplace_back();
+        item.Flags = flags;
         item.Value = result;
-        item.Flags = 0;
         return result;
     }
 

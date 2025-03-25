@@ -15,13 +15,8 @@ public:
 	}
 
 protected:
-    ClassT() : Class("Object")
-    {
-
-
+	ClassT() : Class("Object")
+	{
 		m_Methods.push_back(Method{.Name = "getClass", .Type = "", .Return = "Raw<Class>", .Access = ::New<FuncT<Raw<Class>,Raw<T>>>([](Raw<T> _0)->Raw<Class> { return _0->getClass(); }), });
-
-
-
-    }
+	}
 };
