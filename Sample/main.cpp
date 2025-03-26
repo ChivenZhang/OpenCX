@@ -5,17 +5,25 @@ int main()
 {
     auto obj = Class::New<MyObject>();
 
-    PRINT(Class::Get<ObjectT<MyObject>>()->getName());
+    PRINT("\n>>ACCESS METADATA<<");
+    PRINT("name:", obj->getClass()->getName());
+    for (auto& b : obj->getClass()->getBases()) PRINT("\tbase:", b->getName());
+    for (auto& f : obj->getClass()->getFields()) PRINT("\tfield:", f.Name, f.Type);
+    for (auto& f : obj->getClass()->getSFields()) PRINT("\tstatic field:", f.Name, f.Type);
+    for (auto& m : obj->getClass()->getMethods()) PRINT("\tmethod:", m.Name, m.Type);
+    for (auto& m : obj->getClass()->getSMethods()) PRINT("\tstatic method:", m.Name, m.Type);
 
     // Access field
 
-    Class::Set<MyObject, String>("Name", obj.get(), "你好");
-    Class::SetStatic<MyObject, String>("SName", "世界");
+    PRINT("\n>>ACCESS FIELD<<");
+    Class::Set<MyObject, String>("Name", obj.get(), "Hello");
+    Class::SetStatic<MyObject, String>("SName", "World");
     PRINT("get Name:", *Class::Get<MyObject, String>("Name", obj.get()));
     PRINT("get SName:", *Class::GetStatic<MyObject, String>("SName"));
 
     // Access method
 
+    PRINT("\n>>ACCESS METHOD<<");
     Class::Call<MyObject, void>("Foo", obj.get());
     Class::Call<MyObject, void, String const&>("Foo", obj.get(), "Hello");
     Class::Call<MyObject, void, String const&, float>("Foo", obj.get(), "Hello", 123.0f);
@@ -25,12 +33,14 @@ int main()
 
     // Access inner class
 
+    PRINT("\n>>ACCESS INNER CLASS<<");
     MyObject::InnerObject inObj;
     PRINT("get InnerObject::SubName:", *Class::Get<MyObject::InnerObject, int>("SubName", &inObj));
     PRINT("get InnerObject::SSubName:", *Class::GetStatic<MyObject::InnerObject, const int>("SSubName"));
 
     // Access subclass
 
+    PRINT("\n>>ACCESS SUB CLASS<<");
     MySubObject subObj;
     Class::Call<MyObject, void>("VFoo", &subObj);
     Class::Call<MySubObject, void>("VFoo", &subObj);

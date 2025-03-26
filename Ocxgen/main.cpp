@@ -71,7 +71,7 @@ String CX_OUTPUT_METADATA(clang_t const& meta);
 bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 
-/// format: "Ocxgen input_file clang_args", eg: Ocxgen class.h -xc++-header -std=c++20
+/// format: "Ocxgen input_file clang_args", eg: Ocxgen input.h -std=c++20 -xc++-header
 /// @param argc
 /// @param argv
 /// @return
@@ -176,6 +176,7 @@ int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 			else PRINT( clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
 		}
 	}
+
 	context_t context;
 	auto root = clang_getTranslationUnitCursor(unit);
 	clang_visitChildren(root, CX_TRAVERSE_METADATA, &context);
@@ -187,6 +188,12 @@ int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 	}
 	clang_disposeTranslationUnit(unit);
 	clang_disposeIndex(index);
+
+	for (auto& path : context.OutputsInOrder)
+	{
+		PRINT("output", path);
+	}
+	PRINT("done");
 	return 0;
 }
 
@@ -326,8 +333,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			auto& klass = context.Classes[type];
 			klass.Class.Name = type;
 
-			for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
-			std::cout << "*Struct '" << type << "'\n";
+			//for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
+			//std::cout << "*Struct '" << type << "'\n";
 
 			context.Depth += 1;
 		} break;
@@ -338,8 +345,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			auto& klass = context.Classes[type];
 			klass.Class.Name = type;
 
-			for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
-			std::cout << "*Class '" << type << "'\n";
+			//for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
+			//std::cout << "*Class '" << type << "'\n";
 
 			context.Depth += 1;
 		} break;
@@ -367,8 +374,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 					field.Name = name;
 					field.Type = type;
 
-					for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-					std::cout << "*SField '" << name << "'\n";
+					//for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
+					//std::cout << "*SField '" << name << "'\n";
 				}
 			}
 			result = false;
@@ -386,8 +393,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 				field.Name = name;
 				field.Type = type;
 
-				for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-				std::cout << "*Field '" << name << "'\n";
+				//for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
+				//std::cout << "*Field '" << name << "'\n";
 			}
 			result = false;
 		} break;
@@ -415,8 +422,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 						method.Args.emplace_back(argType);
 					}
 
-					for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-					std::cout << "*SMethod '" << name << "'\n";
+					//for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
+					//std::cout << "*SMethod '" << name << "'\n";
 				}
 				else
 				{
@@ -429,8 +436,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 						method.Args.emplace_back(argType);
 					}
 
-					for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-					std::cout << "*Method '" << name << "'\n";
+					//for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
+					//std::cout << "*Method '" << name << "'\n";
 				}
 			}
 			result = false;
