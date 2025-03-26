@@ -68,7 +68,7 @@ public:
 	}
 
 	template <class T, class F>
-	static Raw<F> Get(String name, Raw<T> obj)
+	static Raw<F> Get(String const& name, Raw<T> obj)
 	{
 		Field f;
 		if (Get<T>()->getField(name, f))
@@ -80,7 +80,7 @@ public:
 	}
 
 	template <class T, class F>
-	static bool Set(String name, Raw<T> obj, F const& value)
+	static bool Set(String const& name, Raw<T> obj, F const& value)
 	{
 		Field f;
 		if (Get<T>()->getField(name, f))
@@ -93,7 +93,7 @@ public:
 	}
 
 	template <class T, class R, class... Args>
-	static R Call(String name, Raw<T> obj, Args... args)
+	static R Call(String const& name, Raw<T> obj, Args... args)
 	{
 		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
 
@@ -113,7 +113,7 @@ public:
 	}
 
 	template <class T, class F>
-	static Raw<F> GetStatic(String name)
+	static Raw<F> GetStatic(String const& name)
 	{
 		Field f;
 		if (Get<T>()->getSField(name, f))
@@ -125,7 +125,7 @@ public:
 	}
 
 	template <class T, class F>
-	static bool SetStatic(String name, F const& value)
+	static bool SetStatic(String const& name, F const& value)
 	{
 		Field f;
 		if (Get<T>()->getSField(name, f))
@@ -138,7 +138,7 @@ public:
 	}
 
 	template <class T, class R, class... Args>
-	static R CallStatic(String name, Args... args)
+	static R CallStatic(String const& name, Args... args)
 	{
 		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
 
@@ -171,7 +171,7 @@ public:
 		return m_Methods;
 	}
 
-	bool getField(String name, Field& field) const
+	bool getField(String const& name, Field& field) const
 	{
 		auto result = std::find_if(m_Fields.cbegin(), m_Fields.cend(), [&](Field const& e)-> bool { return e.Name == name; });
 		if (result == m_Fields.end()) return false;
@@ -179,7 +179,7 @@ public:
 		return true;
 	}
 
-	bool getMethod(String name, Method& method) const
+	bool getMethod(String const& name, Method& method) const
 	{
 		auto result = std::find_if(m_Methods.cbegin(), m_Methods.cend(), [&](Method const& e)-> bool { return e.Name + e.Type == name; });
 		if (result == m_Methods.cend()) return false;
@@ -197,7 +197,7 @@ public:
 		return m_SMethods;
 	}
 
-	bool getSField(String name, Field& field) const
+	bool getSField(String const& name, Field& field) const
 	{
 		auto result = std::find_if(m_SFields.cbegin(), m_SFields.cend(), [&](Field const& e)-> bool { return e.Name == name; });
 		if (result == m_SFields.end()) return false;
@@ -205,7 +205,7 @@ public:
 		return true;
 	}
 
-	bool getSMethod(String name, Method& method) const
+	bool getSMethod(String const& name, Method& method) const
 	{
 		auto result = std::find_if(m_SMethods.cbegin(), m_SMethods.cend(), [&](Method const& e)-> bool { return e.Name + e.Type == name; });
 		if (result == m_SMethods.cend()) return false;
@@ -214,7 +214,7 @@ public:
 	}
 
 protected:
-	Class(String name) : m_Name(name)
+	Class(String const& name) : m_Name(name)
 	{
 	}
 
@@ -237,22 +237,6 @@ public:
 
 protected:
 	ClassT() : Class(typeid(T).name())
-	{
-	}
-};
-
-template <>
-class ClassT<void> : public virtual Class
-{
-public:
-	static Raw<ClassT> Get()
-	{
-		static ClassT s_Instance;
-		return &s_Instance;
-	}
-
-protected:
-	ClassT() : Class(typeid(void).name())
 	{
 	}
 };

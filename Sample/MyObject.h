@@ -65,12 +65,12 @@ public:
 		PRINT("call Foo");
 	}
 
-	void Foo(String name)
+	void Foo(String const& name)
 	{
 		PRINT("call Foo1:", name);
 	}
 
-	void Foo(String name, float data)
+	void Foo(String const& name, float data)
 	{
 		PRINT("call Foo2:", name, data);
 	}
@@ -80,12 +80,12 @@ public:
 		PRINT("call SFoo");
 	}
 
-	static void SFoo(String name)
+	static void SFoo(String const& name)
 	{
 		PRINT("call SFoo1:", name);
 	}
 
-	static void SFoo(String name, float data)
+	static void SFoo(String const& name, float data)
 	{
 		PRINT("call SFoo2:", name, data);
 	}

@@ -9,23 +9,19 @@ int main()
 
     // Access field
 
-    PRINT(Class::Get<void>()->getName());
-
     Class::Set<MyObject, String>("Name", obj.get(), "你好");
     Class::SetStatic<MyObject, String>("SName", "世界");
-
     PRINT("get Name:", *Class::Get<MyObject, String>("Name", obj.get()));
     PRINT("get SName:", *Class::GetStatic<MyObject, String>("SName"));
 
     // Access method
 
     Class::Call<MyObject, void>("Foo", obj.get());
-    Class::Call<MyObject, void, String>("Foo", obj.get(), "Hello");
-    Class::Call<MyObject, void, String, float>("Foo", obj.get(), "Hello", 123.0f);
-
+    Class::Call<MyObject, void, String const&>("Foo", obj.get(), "Hello");
+    Class::Call<MyObject, void, String const&, float>("Foo", obj.get(), "Hello", 123.0f);
     Class::CallStatic<MyObject, void>("SFoo");
-    Class::CallStatic<MyObject, void, String>("SFoo", "World");
-    Class::CallStatic<MyObject, void, String, float>("SFoo", "World", 456.0f);
+    Class::CallStatic<MyObject, void, String const&>("SFoo", "World");
+    Class::CallStatic<MyObject, void, String const&, float>("SFoo", "World", 456.0f);
 
     // Access inner class
 

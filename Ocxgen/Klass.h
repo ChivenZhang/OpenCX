@@ -33,10 +33,10 @@
 		m_Bases.push_back(ClassT<)" META_NAME R"(>::Get());)"
 
 #define TEMPLATE_FIELD R"(
-		m_Fields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<FuncT<Raw<decltype(T::)" META_NAME R"()>,Raw<T> >>([](Raw<T> _0) { return &_0->)" META_NAME R"(; }), });)"
+		m_Fields.push_back(Field{.Name = ")" META_NAME R"(", .Type = )" META_TYPE R"(, .Access = ::New<FuncT<Raw<decltype(T::)" META_NAME R"()>,Raw<T> >>([](Raw<T> _0) { return &_0->)" META_NAME R"(; }), });)"
 
 #define TEMPLATE_SFIELD R"(
-		m_SFields.push_back(Field{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Access = ::New<FuncT<Raw<decltype(T::)" META_NAME R"()>>>([]() { return &T::)" META_NAME R"(; }), });)"
+		m_SFields.push_back(Field{.Name = ")" META_NAME R"(", .Type = )" META_TYPE R"(, .Access = ::New<FuncT<Raw<decltype(T::)" META_NAME R"()>>>([]() { return &T::)" META_NAME R"(; }), });)"
 
 #define TEMPLATE_METHOD R"(
 		m_Methods.push_back(Method{.Name = ")" META_NAME R"(", .Type = ")" META_TYPE R"(", .Return = Class::Get<)" META_RETURN R"(>()->getName(), .Access = ::New<FuncT<)" META_RETURN ",Raw<T>" META_ARGS_TYPE R"( >>([](Raw<T> _0)" META_ARGS_CALL R"()->)" META_RETURN R"( { return _0->)" META_NAME "(" META_ARGS_PASS R"(); }), });)"

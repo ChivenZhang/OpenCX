@@ -235,7 +235,7 @@ String CX_OUTPUT_METADATA(clang_t const& meta)
 	{
 		String s(TEMPLATE_FIELD);
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
-		s = CX_REPLACE_STR(s, META_TYPE, R"(")" "+Class::Get<" + e.Type + ">()->getName()" R"(+")");
+		s = CX_REPLACE_STR(s, META_TYPE, "Class::Get<" + e.Type + ">()->getName()");
 		metaField += s;
 	}
 
@@ -243,7 +243,7 @@ String CX_OUTPUT_METADATA(clang_t const& meta)
 	{
 		String s(TEMPLATE_SFIELD);
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
-		s = CX_REPLACE_STR(s, META_TYPE, R"(")" "+Class::Get<" + e.Type + ">()->getName()" R"(+")");
+		s = CX_REPLACE_STR(s, META_TYPE, "Class::Get<" + e.Type + ">()->getName()");
 		metaSField += s;
 	}
 
