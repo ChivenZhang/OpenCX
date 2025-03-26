@@ -241,7 +241,7 @@ protected:
 	}
 };
 
-#define CLASST(NAME)\
+#define CLASS(NAME)\
 template<>\
 class ClassT<NAME> : public virtual Class\
 {\
@@ -254,3 +254,5 @@ public:\
 protected:\
     ClassT() : Class(#NAME) {}\
 }
+
+#define ENABLE_CLASS(NAME) friend class ClassT<NAME>

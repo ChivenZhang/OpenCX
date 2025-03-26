@@ -1,12 +1,6 @@
-#include <iostream>
-#if 1
 #include <OpenCX/Class.h>
 #include "MyObject.h"
-CLASST(int);
-CLASST(float);
-CLASST(String);
-CLASST(ObjectT<MyObject>);
-#include "main.meta.h"
+#include "test.meta.h"
 
 int main()
 {
@@ -40,21 +34,3 @@ int main()
 
     return 0;
 }
-
-#else
-
-#include "MyObject.h"
-
-template<class T>
-class Foo
-{
-
-};
-
-int main()
-{
-    MyObject obj;
-    return 0;
-}
-
-#endif

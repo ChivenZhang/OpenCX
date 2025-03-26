@@ -7,12 +7,13 @@
       "binaryDir": "${sourceDir}/Output/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CLANG_BINARY_DIR": "D:/Program Files/LLVM",
+        "CMAKE_C_COMPILER": "clang.exe",
         "CMAKE_C_COMPILER_FORCED": "ON",
-        "CMAKE_C_COMPILER": "D:/ChivenZhang/bin/msys64/clang64/bin/clang.exe",
-        "CMAKE_CXX_COMPILER": "D:/ChivenZhang/bin/msys64/clang64/bin/clang++.exe",
+        "CMAKE_CXX_COMPILER": "clang++.exe",
+        "CMAKE_CXX_COMPILER_FORCED": "ON",
+        "OPENCX_ENABLE_SAMPLE": "ON",
 
-        "OPENCX_ENABLE_SAMPLE": "ON"
+        "CLANG_BINARY_DIR": "D:/Program Files/LLVM"
       }
     },
     {
@@ -21,12 +22,13 @@
       "binaryDir": "${sourceDir}/Output/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "CLANG_BINARY_DIR": "D:/Program Files/LLVM",
+        "CMAKE_C_COMPILER": "clang.exe",
         "CMAKE_C_COMPILER_FORCED": "ON",
-        "CMAKE_C_COMPILER": "D:/ChivenZhang/bin/msys64/clang64/bin/clang.exe",
-        "CMAKE_CXX_COMPILER": "D:/ChivenZhang/bin/msys64/clang64/bin/clang++.exe",
+        "CMAKE_CXX_COMPILER": "clang++.exe",
+        "CMAKE_CXX_COMPILER_FORCED": "ON",
+        "OPENCX_ENABLE_SAMPLE": "ON",
 
-        "OPENCX_ENABLE_SAMPLE": "ON"
+        "CLANG_BINARY_DIR": "D:/Program Files/LLVM"
       }
     }
   ]

@@ -235,7 +235,7 @@ String CX_OUTPUT_METADATA(clang_t const& meta)
 	{
 		String s(TEMPLATE_FIELD);
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
-		s = CX_REPLACE_STR(s, META_TYPE, e.Type);
+		s = CX_REPLACE_STR(s, META_TYPE, R"(")" "+Class::Get<" + e.Type + ">()->getName()" R"(+")");
 		metaField += s;
 	}
 
@@ -243,7 +243,7 @@ String CX_OUTPUT_METADATA(clang_t const& meta)
 	{
 		String s(TEMPLATE_SFIELD);
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
-		s = CX_REPLACE_STR(s, META_TYPE, e.Type);
+		s = CX_REPLACE_STR(s, META_TYPE, R"(")" "+Class::Get<" + e.Type + ">()->getName()" R"(+")");
 		metaSField += s;
 	}
 
@@ -253,7 +253,7 @@ String CX_OUTPUT_METADATA(clang_t const& meta)
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
 		s = CX_REPLACE_STR(s, META_RETURN, e.Type);
 		String _t;
-		for(auto& a : e.Args) _t += "|" + a;
+		for(auto& a : e.Args) _t += R"(|")" "+Class::Get<" + a + ">()->getName()" R"(+")";
 		s = CX_REPLACE_STR(s, META_TYPE, _t);
 		String t;
 		for(auto& a : e.Args) t += "," + a;
@@ -273,7 +273,7 @@ String CX_OUTPUT_METADATA(clang_t const& meta)
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
 		s = CX_REPLACE_STR(s, META_RETURN, e.Type);
 		String _t;
-		for(auto& a : e.Args) _t += "|" + a;
+		for(auto& a : e.Args) _t += R"(|")" "+Class::Get<" + a + ">()->getName()" R"(+")";
 		s = CX_REPLACE_STR(s, META_TYPE, _t);
 		String t;
 		for(auto& a : e.Args) t += "," + a;
@@ -430,7 +430,7 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 					}
 
 					for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-					std::cout << "*Method '" << name << "=> " << type << "'\n";
+					std::cout << "*Method '" << name << "'\n";
 				}
 			}
 			result = false;

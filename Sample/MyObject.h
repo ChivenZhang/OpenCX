@@ -36,6 +36,7 @@ using Base2 = Base;
 
 class MyObject : public ObjectT<MyObject>, public Base2, public abc::foo
 {
+	ENABLE_CLASS(MyObject);
 public:
 	String Name = "Name";
 	String Name2 = "Name2";
