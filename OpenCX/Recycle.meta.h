@@ -16,8 +16,8 @@ protected:
 	ClassT() : Class("RecycleBin")
 	{
 		using T = RecycleBin; 
-		m_Fields.push_back(Field{.Name = "Value", .Type = "Ref<Object>", .Access = ::New<FuncT<Raw<decltype(T::Value)>,Raw<T> >>([](Raw<T> _0) { return &_0->Value; }), } );
-		m_Fields.push_back(Field{.Name = "Flags", .Type = "uint32_t", .Access = ::New<FuncT<Raw<decltype(T::Flags)>,Raw<T> >>([](Raw<T> _0) { return &_0->Flags; }), } );
+		m_Fields.push_back(Field{.Name = "Value", .Type = "Ref<Object>", .Access = ::New<FuncT<Raw<decltype(T::Value)>,Raw<T> >>([](Raw<T> _0) { return &_0->Value; }), });
+		m_Fields.push_back(Field{.Name = "Flags", .Type = "uint32_t", .Access = ::New<FuncT<Raw<decltype(T::Flags)>,Raw<T> >>([](Raw<T> _0) { return &_0->Flags; }), });
 	}
 };
 

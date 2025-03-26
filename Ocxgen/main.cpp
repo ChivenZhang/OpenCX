@@ -49,6 +49,7 @@ struct context_t
 {
 	uint32_t Depth = 0;
 	Set<String> Outputs;
+	List<String> OutputsInOrder;
 	Stack<CXCursor> ASTree;
 	Map<String, clang_t> Classes;
 };
@@ -63,7 +64,7 @@ std::ostream& operator<<(std::ostream& stream, const CXString& str)
 String CX_READ_FILE(String path);
 bool CX_WRITE_FILE(String path, String content);
 String CX_REPLACE_STR(String const& string, String const& target, String const& replacement);
-int CX_ANALYSE_METADATA(String file, String output, int argc, char** argv);
+int CX_ANALYSE_METADATA(String file, int argc, char** argv);
 CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor node, CXCursor parent, CXClientData client);
 String CX_OUTPUT_METADATA(clang_t const& meta);
 bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
@@ -72,19 +73,12 @@ void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 int main(int argc, char** argv)
 {
 	OpenARGS args(argc, argv);
-	if (args.items().size() < 3)
+	if (args.items().size() < 2)
 	{
 		PRINT("no file input");
 		return 0;
 	}
-	auto file = args.item(1).Value;
-	if (std::filesystem::exists(file) == false)
-	{
-		PRINT("file does not exist:", file);
-		return -1;
-	}
-	auto output = args.item(2).Value;
-	return CX_ANALYSE_METADATA(file, output, argc - 3, argv + 3);
+	return CX_ANALYSE_METADATA(args.item(1).Value, argc - 2, argv + 2);
 }
 
 String CX_READ_FILE(String path)
@@ -142,7 +136,7 @@ String CX_REPLACE_STR(String const& string, String const& target, String const& 
 	return result;
 }
 
-int CX_ANALYSE_METADATA(String file, String output, int argc, char** argv)
+int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 {
 	auto index = clang_createIndex(0, 0);
 	CXTranslationUnit unit = nullptr;
@@ -187,11 +181,11 @@ int CX_ANALYSE_METADATA(String file, String output, int argc, char** argv)
 
 	auto folder = std::filesystem::path(file).parent_path().generic_string();
 	auto baseName = std::filesystem::path(file).stem().generic_string();
-	auto fileName = std::filesystem::path(file).filename().generic_string();
+	auto filePath = folder + "/" + baseName + ".meta.h";
 
-	String content("#pragma once\n");
-	for (auto& metaPath : context.Outputs) content += R"(#include ")" + metaPath + R"(")" + "\n";
-	CX_WRITE_FILE(folder + "/" + baseName + ".meta.h", content);
+	String content("#pragma once");
+	for (auto& metaPath : context.OutputsInOrder) content += "\n" R"(#include ")" + std::filesystem::relative(metaPath, folder).generic_string() + R"(")";
+	CX_WRITE_FILE(filePath, content);
 	return 0;
 }
 
@@ -485,6 +479,7 @@ void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			auto output = folder + "/" + baseName + ".meta.h";
 			if (context.Outputs.insert(output).second)
 			{
+				context.OutputsInOrder.push_back(output);
 				std::filesystem::remove(output);
 
 				String content(TEMPLATE_INCLUDE);

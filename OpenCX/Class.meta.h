@@ -33,9 +33,9 @@ protected:
 	ClassT() : Class("Field")
 	{
 		using T = Field; 
-		m_Fields.push_back(Field{.Name = "Name", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Name)>,Raw<T> >>([](Raw<T> _0) { return &_0->Name; }), } );
-		m_Fields.push_back(Field{.Name = "Type", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Type)>,Raw<T> >>([](Raw<T> _0) { return &_0->Type; }), } );
-		m_Fields.push_back(Field{.Name = "Access", .Type = "Ref<Func>", .Access = ::New<FuncT<Raw<decltype(T::Access)>,Raw<T> >>([](Raw<T> _0) { return &_0->Access; }), } );
+		m_Fields.push_back(Field{.Name = "Name", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Name)>,Raw<T> >>([](Raw<T> _0) { return &_0->Name; }), });
+		m_Fields.push_back(Field{.Name = "Type", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Type)>,Raw<T> >>([](Raw<T> _0) { return &_0->Type; }), });
+		m_Fields.push_back(Field{.Name = "Access", .Type = "Ref<Func>", .Access = ::New<FuncT<Raw<decltype(T::Access)>,Raw<T> >>([](Raw<T> _0) { return &_0->Access; }), });
 	}
 };
 
@@ -53,10 +53,10 @@ protected:
 	ClassT() : Class("Method")
 	{
 		using T = Method; 
-		m_Fields.push_back(Field{.Name = "Name", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Name)>,Raw<T> >>([](Raw<T> _0) { return &_0->Name; }), } );
-		m_Fields.push_back(Field{.Name = "Type", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Type)>,Raw<T> >>([](Raw<T> _0) { return &_0->Type; }), } );
-		m_Fields.push_back(Field{.Name = "Return", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Return)>,Raw<T> >>([](Raw<T> _0) { return &_0->Return; }), } );
-		m_Fields.push_back(Field{.Name = "Access", .Type = "Ref<Func>", .Access = ::New<FuncT<Raw<decltype(T::Access)>,Raw<T> >>([](Raw<T> _0) { return &_0->Access; }), } );
+		m_Fields.push_back(Field{.Name = "Name", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Name)>,Raw<T> >>([](Raw<T> _0) { return &_0->Name; }), });
+		m_Fields.push_back(Field{.Name = "Type", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Type)>,Raw<T> >>([](Raw<T> _0) { return &_0->Type; }), });
+		m_Fields.push_back(Field{.Name = "Return", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Return)>,Raw<T> >>([](Raw<T> _0) { return &_0->Return; }), });
+		m_Fields.push_back(Field{.Name = "Access", .Type = "Ref<Func>", .Access = ::New<FuncT<Raw<decltype(T::Access)>,Raw<T> >>([](Raw<T> _0) { return &_0->Access; }), });
 	}
 };
 
