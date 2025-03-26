@@ -1,5 +1,5 @@
 #include <iostream>
-#if 0
+#if 1
 #include "main.meta.h"
 CLASST(float);
 CLASST(String);

@@ -46,7 +46,7 @@ public:
 	{
 	public:
 		int SubName = 123;
-		static const int SSubName = 456;
+		static const int SSubName;
 	};
 
 	void Foo()
@@ -82,3 +82,4 @@ public:
 
 String MyObject::SName = "SName";
 String MyObject::SName2 = "SName2";
+const int MyObject::SubObject::SSubName = 456;
