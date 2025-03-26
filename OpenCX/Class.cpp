@@ -12,6 +12,6 @@
 
 String Class::SetClass(String const& name, Raw<Class> value)
 {
-	static Map<String, Raw<Class>> m_Classes;
-	return m_Classes.emplace(name, value).first->first;
+	static Map<String, Raw<Class>> s_Classes;
+	return s_Classes.emplace(name, value).first->first;
 }

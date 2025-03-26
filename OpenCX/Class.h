@@ -221,7 +221,7 @@ protected:
 	template<class T>
 	static String SetClass(Raw<Class> value)
 	{
-		std::string name;
+		String name;
 		if constexpr (std::is_const_v<std::remove_reference_t<T>>) name += "const ";
 		name += typeid(std::remove_const_t<std::remove_reference_t<T>>).name();
 		if constexpr (std::is_lvalue_reference_v<T>) name += "&";

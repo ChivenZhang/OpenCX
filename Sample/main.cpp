@@ -1,5 +1,5 @@
 #include <OpenCX/Class.h>
-#include "test.meta.h"
+#include "MyObject.meta.h"
 
 int main()
 {

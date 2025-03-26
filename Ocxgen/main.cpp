@@ -71,7 +71,7 @@ String CX_OUTPUT_METADATA(clang_t const& meta);
 bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 
-/// format: "Ocxgen input_file clang_args", eg: Ocxgen source.cpp -std=c++20 -Ilibc++/include
+/// format: "Ocxgen input_file clang_args", eg: Ocxgen class.h -xc++-header -std=c++20
 /// @param argc
 /// @param argv
 /// @return
@@ -179,18 +179,14 @@ int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 	context_t context;
 	auto root = clang_getTranslationUnitCursor(unit);
 	clang_visitChildren(root, CX_TRAVERSE_METADATA, &context);
-	context.ASTree.pop();
-	assert(context.ASTree.empty());
+	auto& asTree = context.ASTree;
+	while (asTree.empty() == false)
+	{
+		CX_EXIT_TRAVERSE(asTree.top(), clang_getCursorLexicalParent(asTree.top()), &context);
+		asTree.pop();
+	}
 	clang_disposeTranslationUnit(unit);
 	clang_disposeIndex(index);
-
-	auto folder = std::filesystem::path(file).parent_path().generic_string();
-	auto baseName = std::filesystem::path(file).stem().generic_string();
-	auto filePath = folder + "/" + baseName + ".meta.h";
-
-	String content("#pragma once");
-	for (auto& metaPath : context.OutputsInOrder) content += "\n" R"(#include ")" + std::filesystem::relative(metaPath, folder).generic_string() + R"(")";
-	CX_WRITE_FILE(filePath, content);
 	return 0;
 }
 
