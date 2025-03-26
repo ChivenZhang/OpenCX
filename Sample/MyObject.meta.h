@@ -13,7 +13,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(MyBase).name())
+	ClassT() : Class(Class::SetClass<MyBase>(this))
 	{
 		using T = MyBase;
 		m_SFields.push_back(Field{.Name = "Global1", .Type = Class::Get<int>()->getName(), .Access = ::New<FuncT<Raw<decltype(T::Global1)>>>([]() { return &T::Global1; }), });
@@ -31,7 +31,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(MyObject::InnerObject).name())
+	ClassT() : Class(Class::SetClass<MyObject::InnerObject>(this))
 	{
 		using T = MyObject::InnerObject;
 		m_Fields.push_back(Field{.Name = "SubName", .Type = Class::Get<int>()->getName(), .Access = ::New<FuncT<Raw<decltype(T::SubName)>,Raw<T> >>([](Raw<T> _0) { return &_0->SubName; }), });
@@ -50,7 +50,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(MyObject).name())
+	ClassT() : Class(Class::SetClass<MyObject>(this))
 	{
 		using T = MyObject;
 		m_Bases.push_back(ClassT<ObjectT<MyObject>>::Get());
@@ -82,7 +82,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(MySubObject).name())
+	ClassT() : Class(Class::SetClass<MySubObject>(this))
 	{
 		using T = MySubObject;
 		m_Bases.push_back(ClassT<MyObject>::Get());

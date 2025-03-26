@@ -13,7 +13,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(RecycleBin).name())
+	ClassT() : Class(Class::SetClass<RecycleBin>(this))
 	{
 		using T = RecycleBin;
 		m_Fields.push_back(Field{.Name = "Value", .Type = Class::Get<Ref<Object>>()->getName(), .Access = ::New<FuncT<Raw<decltype(T::Value)>,Raw<T> >>([](Raw<T> _0) { return &_0->Value; }), });
@@ -32,7 +32,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(Recycle).name())
+	ClassT() : Class(Class::SetClass<Recycle>(this))
 	{
 		using T = Recycle;
 		m_Methods.push_back(Method{.Name = "mark", .Type = "|"+Class::Get<float>()->getName()+"", .Return = Class::Get<void>()->getName(), .Access = ::New<FuncT<void,Raw<T>,float >>([](Raw<T> _0,float _1)->void { return _0->mark(_1); }), });

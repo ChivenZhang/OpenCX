@@ -56,9 +56,9 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid()" META_CLASS R"().name())
+	ClassT() : Class(Class::SetClass<)" META_CLASS R"(>(this))
 	{
-		using T = )" META_CLASS R"(;)" META_BASE META_FIELD META_SFIELD META_METHOD META_SMETHOD R"(
+		using T = )" META_CLASS ";" META_BASE META_FIELD META_SFIELD META_METHOD META_SMETHOD R"(
 	}
 };
 )"

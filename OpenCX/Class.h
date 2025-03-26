@@ -95,7 +95,7 @@ public:
 	template <class T, class R, class... Args>
 	static R Call(String const& name, Raw<T> obj, Args... args)
 	{
-		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
+		static auto type = (String() + ... + ("|" + Class::Get<Args>()->getName()));
 
 		Method m;
 		if (Get<T>()->getMethod(name + type, m))
@@ -140,7 +140,7 @@ public:
 	template <class T, class R, class... Args>
 	static R CallStatic(String const& name, Args... args)
 	{
-		static auto type = (String() + ... + ("|" + Class::Get<decltype(args)>()->getName()));
+		static auto type = (String() + ... + ("|" + Class::Get<Args>()->getName()));
 
 		Method m;
 		if (Get<T>()->getSMethod(name + type, m))
@@ -214,8 +214,19 @@ public:
 	}
 
 protected:
-	Class(String const& name) : m_Name(name)
+	Class(String const& name) : m_Name(name) { }
+
+	static String SetClass(String const& name, Raw<Class> value);
+
+	template<class T>
+	static String SetClass(Raw<Class> value)
 	{
+		std::string name;
+		if constexpr (std::is_const_v<std::remove_reference_t<T>>) name += "const ";
+		name += typeid(std::remove_const_t<std::remove_reference_t<T>>).name();
+		if constexpr (std::is_lvalue_reference_v<T>) name += "&";
+		else if constexpr (std::is_rvalue_reference_v<T>) name += "&&";
+		return SetClass(name, value);
 	}
 
 protected:
@@ -236,7 +247,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(T).name())
+	ClassT() : Class(Class::SetClass<T>(this))
 	{
 	}
 };

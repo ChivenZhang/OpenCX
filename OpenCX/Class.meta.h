@@ -13,7 +13,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(Func).name())
+	ClassT() : Class(Class::SetClass<Func>(this))
 	{
 		using T = Func;
 	}
@@ -30,7 +30,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(Field).name())
+	ClassT() : Class(Class::SetClass<Field>(this))
 	{
 		using T = Field;
 		m_Fields.push_back(Field{.Name = "Name", .Type = Class::Get<String>()->getName(), .Access = ::New<FuncT<Raw<decltype(T::Name)>,Raw<T> >>([](Raw<T> _0) { return &_0->Name; }), });
@@ -50,7 +50,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(Method).name())
+	ClassT() : Class(Class::SetClass<Method>(this))
 	{
 		using T = Method;
 		m_Fields.push_back(Field{.Name = "Name", .Type = Class::Get<String>()->getName(), .Access = ::New<FuncT<Raw<decltype(T::Name)>,Raw<T> >>([](Raw<T> _0) { return &_0->Name; }), });
@@ -71,7 +71,7 @@ public:
 	}
 
 protected:
-	ClassT() : Class(typeid(Class).name())
+	ClassT() : Class(Class::SetClass<Class>(this))
 	{
 		using T = Class;
 		m_Methods.push_back(Method{.Name = "getName", .Type = "", .Return = Class::Get<String>()->getName(), .Access = ::New<FuncT<String,Raw<T> >>([](Raw<T> _0)->String { return _0->getName(); }), });

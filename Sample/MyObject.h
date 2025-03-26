@@ -102,7 +102,7 @@ public:
 	{
 	    PRINT("call VFoo in MySubObject");
 	}
-	virtual void VFoo(int data) override
+	void VFoo(int data) override
 	{
 	    PRINT("call VFoo1 in MySubObject:", data);
 	}

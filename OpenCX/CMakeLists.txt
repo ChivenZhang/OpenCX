@@ -5,4 +5,5 @@ add_library(OpenCX STATIC
 		Recycle.cpp
 		Recycle.h
 		Public.h
+		Class.cpp
 )
