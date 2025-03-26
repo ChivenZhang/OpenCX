@@ -9,6 +9,7 @@
 *
 * =================================================*/
 #include <cassert>
+#include <sstream>
 #include <fstream>
 #include <filesystem>
 #include <regex>

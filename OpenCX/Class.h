@@ -246,7 +246,6 @@ template<>\
 class ClassT<NAME> : public virtual Class\
 {\
 public:\
-	using T = NAME;\
     static Raw<ClassT> Get()\
     {\
         static ClassT s_Instance;\

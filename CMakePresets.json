@@ -7,9 +7,10 @@
       "binaryDir": "${sourceDir}/Output/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
         "CLANG_BINARY_DIR": "D:/Program Files/LLVM",
+        "CMAKE_C_COMPILER_FORCED": "ON",
+        "CMAKE_C_COMPILER": "D:/ChivenZhang/bin/msys64/clang64/bin/clang.exe",
+        "CMAKE_CXX_COMPILER": "D:/ChivenZhang/bin/msys64/clang64/bin/clang++.exe",
 
         "OPENCX_ENABLE_SAMPLE": "ON"
       }
@@ -20,9 +21,10 @@
       "binaryDir": "${sourceDir}/Output/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT_CUSTOM}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
         "CLANG_BINARY_DIR": "D:/Program Files/LLVM",
+        "CMAKE_C_COMPILER_FORCED": "ON",
+        "CMAKE_C_COMPILER": "D:/ChivenZhang/bin/msys64/clang64/bin/clang.exe",
+        "CMAKE_CXX_COMPILER": "D:/ChivenZhang/bin/msys64/clang64/bin/clang++.exe",
 
         "OPENCX_ENABLE_SAMPLE": "ON"
       }

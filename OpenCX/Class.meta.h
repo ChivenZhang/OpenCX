@@ -15,7 +15,7 @@ public:
 protected:
 	ClassT() : Class("Func")
 	{
-		using T = Func; 
+		using T = Func;
 	}
 };
 
@@ -32,7 +32,7 @@ public:
 protected:
 	ClassT() : Class("Field")
 	{
-		using T = Field; 
+		using T = Field;
 		m_Fields.push_back(Field{.Name = "Name", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Name)>,Raw<T> >>([](Raw<T> _0) { return &_0->Name; }), });
 		m_Fields.push_back(Field{.Name = "Type", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Type)>,Raw<T> >>([](Raw<T> _0) { return &_0->Type; }), });
 		m_Fields.push_back(Field{.Name = "Access", .Type = "Ref<Func>", .Access = ::New<FuncT<Raw<decltype(T::Access)>,Raw<T> >>([](Raw<T> _0) { return &_0->Access; }), });
@@ -52,7 +52,7 @@ public:
 protected:
 	ClassT() : Class("Method")
 	{
-		using T = Method; 
+		using T = Method;
 		m_Fields.push_back(Field{.Name = "Name", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Name)>,Raw<T> >>([](Raw<T> _0) { return &_0->Name; }), });
 		m_Fields.push_back(Field{.Name = "Type", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Type)>,Raw<T> >>([](Raw<T> _0) { return &_0->Type; }), });
 		m_Fields.push_back(Field{.Name = "Return", .Type = "String", .Access = ::New<FuncT<Raw<decltype(T::Return)>,Raw<T> >>([](Raw<T> _0) { return &_0->Return; }), });
@@ -73,7 +73,7 @@ public:
 protected:
 	ClassT() : Class("Class")
 	{
-		using T = Class; 
+		using T = Class;
 		m_Methods.push_back(Method{.Name = "getName", .Type = "", .Return = "String", .Access = ::New<FuncT<String,Raw<T> >>([](Raw<T> _0)->String { return _0->getName(); }), });
 		m_Methods.push_back(Method{.Name = "getBases", .Type = "", .Return = "ListView<const Raw<Class>>", .Access = ::New<FuncT<ListView<const Raw<Class>>,Raw<T> >>([](Raw<T> _0)->ListView<const Raw<Class>> { return _0->getBases(); }), });
 		m_Methods.push_back(Method{.Name = "getFields", .Type = "", .Return = "ListView<const Field>", .Access = ::New<FuncT<ListView<const Field>,Raw<T> >>([](Raw<T> _0)->ListView<const Field> { return _0->getFields(); }), });

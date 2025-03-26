@@ -1,12 +1,18 @@
 #include <iostream>
 #if 1
-#include "main.meta.h"
+#include <OpenCX/Class.h>
+#include "MyObject.h"
+CLASST(int);
 CLASST(float);
 CLASST(String);
+CLASST(ObjectT<MyObject>);
+#include "main.meta.h"
 
 int main()
 {
     auto obj = Class::New<MyObject>();
+
+    PRINT(Class::Get<ObjectT<MyObject>>()->getName());
 
     Class::Set<MyObject, String>("Name", obj.get(), "你好");
     Class::SetStatic<MyObject, String>("SName", "世界");
@@ -22,9 +28,15 @@ int main()
     Class::CallStatic<MyObject, void, String>("SFoo", "World");
     Class::CallStatic<MyObject, void, String, float>("SFoo", "World", 456.0f);
 
-    MyObject::SubObject sub;
-    PRINT("get SubObject::SubName:", *Class::Get<MyObject::SubObject, int>("SubName", &sub));
-    PRINT("get SubObject::SSubName:", *Class::GetStatic<MyObject::SubObject, const int>("SSubName"));
+    MyObject::InnerObject inObj;
+    PRINT("get InnerObject::SubName:", *Class::Get<MyObject::InnerObject, int>("SubName", &inObj));
+    PRINT("get InnerObject::SSubName:", *Class::GetStatic<MyObject::InnerObject, const int>("SSubName"));
+
+    MySubObject subObj;
+    Class::Call<MyObject, void>("VFoo", &subObj);
+    Class::Call<MySubObject, void>("VFoo", &subObj);
+    Class::Call<MyObject, void, int>("VFoo", &subObj, 123);
+    Class::Call<MySubObject, void, int>("VFoo", &subObj, 456);
 
     return 0;
 }
@@ -32,6 +44,12 @@ int main()
 #else
 
 #include "MyObject.h"
+
+template<class T>
+class Foo
+{
+
+};
 
 int main()
 {

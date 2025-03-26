@@ -58,7 +58,7 @@ public:
 protected:
 	ClassT() : Class(")" META_CLASS R"(")
 	{
-		using T = )" META_CLASS R"(; )" META_BASE META_FIELD META_SFIELD META_METHOD META_SMETHOD R"(
+		using T = )" META_CLASS R"(;)" META_BASE META_FIELD META_SFIELD META_METHOD META_SMETHOD R"(
 	}
 };
 )"

@@ -42,12 +42,22 @@ public:
 	static String SName;
 	static String SName2;
 
-	class SubObject
+	class InnerObject
 	{
 	public:
 		int SubName = 123;
 		static const int SSubName;
 	};
+
+	void VFoo()
+	{
+	    PRINT("call VFoo in MyObject");
+	}
+
+	virtual void VFoo(int data)
+	{
+	    PRINT("call VFoo1 in MyObject:", data);
+	}
 
 	void Foo()
 	{
@@ -82,4 +92,17 @@ public:
 
 String MyObject::SName = "SName";
 String MyObject::SName2 = "SName2";
-const int MyObject::SubObject::SSubName = 456;
+const int MyObject::InnerObject::SSubName = 456;
+
+class MySubObject : public MyObject
+{
+public:
+	void VFoo()
+	{
+	    PRINT("call VFoo in MySubObject");
+	}
+	virtual void VFoo(int data) override
+	{
+	    PRINT("call VFoo1 in MySubObject:", data);
+	}
+};
