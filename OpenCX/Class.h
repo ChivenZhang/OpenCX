@@ -26,7 +26,7 @@ public:
 	{
 	}
 
-	R call(Args... args) { return m_Func(args...); }
+	R call(Args... args) { return m_Func(std::forward<Args>(args)...); }
 
 protected:
 	Lambda<R(Args...)> m_Func;
@@ -237,6 +237,22 @@ public:
 
 protected:
 	ClassT() : Class(typeid(T).name())
+	{
+	}
+};
+
+template <>
+class ClassT<void> : public virtual Class
+{
+public:
+	static Raw<ClassT> Get()
+	{
+		static ClassT s_Instance;
+		return &s_Instance;
+	}
+
+protected:
+	ClassT() : Class(typeid(void).name())
 	{
 	}
 };

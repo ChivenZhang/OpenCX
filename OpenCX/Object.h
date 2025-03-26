@@ -33,5 +33,3 @@ public:
         return Class::Get<T>();
     }
 };
-
-#include "Recycle.h"

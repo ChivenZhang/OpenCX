@@ -9,6 +9,8 @@ int main()
 
     // Access field
 
+    PRINT(Class::Get<void>()->getName());
+
     Class::Set<MyObject, String>("Name", obj.get(), "你好");
     Class::SetStatic<MyObject, String>("SName", "世界");
 

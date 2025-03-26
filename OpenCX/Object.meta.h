@@ -16,6 +16,6 @@ protected:
 	ClassT() : Class(typeid(Object).name())
 	{
 		using T = Object;
-		m_Methods.push_back(Method{.Name = "getClass", .Type = "", .Return = "Raw<Class>", .Access = ::New<FuncT<Raw<Class>,Raw<T> >>([](Raw<T> _0)->Raw<Class> { return _0->getClass(); }), });
+		m_Methods.push_back(Method{.Name = "getClass", .Type = "", .Return = Class::Get<Raw<Class>>()->getName(), .Access = ::New<FuncT<Raw<Class>,Raw<T> >>([](Raw<T> _0)->Raw<Class> { return _0->getClass(); }), });
 	}
 };
