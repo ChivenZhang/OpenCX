@@ -213,8 +213,6 @@ public:
 		return true;
 	}
 
-	virtual void traverseGC() = 0
-
 protected:
 	Class(String name) : m_Name(name)
 	{
