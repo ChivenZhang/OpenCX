@@ -71,6 +71,10 @@ String CX_OUTPUT_METADATA(clang_t const& meta);
 bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client);
 
+/// format: "Ocxgen input_file clang_args", eg: Ocxgen source.cpp -std=c++20 -Ilibc++/include
+/// @param argc
+/// @param argv
+/// @return
 int main(int argc, char** argv)
 {
 	OpenARGS args(argc, argv);
