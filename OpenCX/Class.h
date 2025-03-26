@@ -213,6 +213,8 @@ public:
 		return true;
 	}
 
+	virtual void traverseGC() = 0
+
 protected:
 	Class(String name) : m_Name(name)
 	{
@@ -240,19 +242,5 @@ protected:
 	{
 	}
 };
-
-#define CLASS(NAME)\
-template<>\
-class ClassT<NAME> : public virtual Class\
-{\
-public:\
-    static Raw<ClassT> Get()\
-    {\
-        static ClassT s_Instance;\
-        return &s_Instance;\
-    }\
-protected:\
-    ClassT() : Class(#NAME) {}\
-}
 
 #define ENABLE_CLASS(NAME) friend class ClassT<NAME>
