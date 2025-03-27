@@ -219,7 +219,7 @@ protected:
 	static String SetClass(String const& name, Raw<Class> value);
 
 	template<class T>
-	static String SetClass(Raw<Class> value)
+	static constexpr String SetClass(Raw<Class> value)
 	{
 		String name;
 		if constexpr (std::is_const_v<std::remove_reference_t<T>>) name += "const ";

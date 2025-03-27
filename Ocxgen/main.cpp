@@ -21,6 +21,7 @@
 struct class_t
 {
 	String Name;
+	bool Struct = false;
 };
 
 struct field_t
@@ -41,6 +42,7 @@ struct method_t
 struct clang_t
 {
 	class_t Class;
+	bool Finish = false;
 	List<class_t> Bases;
 	List<field_t> Fields, SFields;
 	List<method_t> Methods, SMethods;
@@ -49,6 +51,7 @@ struct clang_t
 struct context_t
 {
 	uint32_t Depth = 0;
+	String Input, Output;
 	Set<String> Outputs;
 	List<String> OutputsInOrder;
 	Stack<CXCursor> ASTree;
@@ -96,7 +99,7 @@ String CX_READ_FILE(String path)
 		file_reader.close();
 		return buffer.str();
 	}
-	PRINT("Failed to open file!" );
+	PRINT("Failed to open file!");
 	return String();
 }
 
@@ -109,7 +112,7 @@ bool CX_WRITE_FILE(String path, String content)
 		file_writer.close();
 		return true;
 	}
-	PRINT("Failed to open file!" );
+	PRINT("Failed to open file!");
 	return false;
 }
 
@@ -122,7 +125,7 @@ bool CX_APPEND_FILE(String path, String content)
 		file_writer.close();
 		return true;
 	}
-	PRINT("Failed to open file!" );
+	PRINT("Failed to open file!");
 	return false;
 }
 
@@ -130,7 +133,7 @@ String CX_REPLACE_STR(String const& string, String const& target, String const& 
 {
 	String result;
 	size_t i = 0;
-	for (; i < string.length(); )
+	for (; i < string.length();)
 	{
 		auto k = string.find(target, i);
 		if (k == String::npos) break;
@@ -166,18 +169,26 @@ int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 			auto type = clang_getDiagnosticSeverity(diag);
 			if (type == CXDiagnostic_Error)
 			{
-				ERROR( clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
+				ERROR(clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
 			}
 			else if (type == CXDiagnostic_Fatal)
 			{
-				ERROR( clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
+				ERROR(clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
 				return -1;
 			}
-			else PRINT( clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
+			else PRINT(clang_getCString(clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions())));
 		}
 	}
 
+	auto folder = std::filesystem::path(file).parent_path().generic_string();
+	auto baseName = std::filesystem::path(file).stem().generic_string();
+	auto fileName = std::filesystem::path(file).filename().generic_string();
+
 	context_t context;
+	context.Input = file;
+	context.Output = folder + "/" + baseName + ".meta.h";
+	CX_WRITE_FILE(context.Output, TEMPLATE_HEAD);
+
 	auto root = clang_getTranslationUnitCursor(unit);
 	clang_visitChildren(root, CX_TRAVERSE_METADATA, &context);
 	auto& asTree = context.ASTree;
@@ -189,10 +200,6 @@ int CX_ANALYSE_METADATA(String file, int argc, char** argv)
 	clang_disposeTranslationUnit(unit);
 	clang_disposeIndex(index);
 
-	for (auto& path : context.OutputsInOrder)
-	{
-		PRINT("output", path);
-	}
 	PRINT("done");
 	return 0;
 }
@@ -224,8 +231,8 @@ CXChildVisitResult CX_TRAVERSE_METADATA(CXCursor node, CXCursor parent, CXClient
 String CX_OUTPUT_METADATA(clang_t const& meta)
 {
 	auto& bases = meta.Bases;
-	auto& fields = meta.Fields, &sFields = meta.SFields;
-	auto& methods = meta.Methods, &sMethods = meta.SMethods;
+	auto &fields = meta.Fields, &sFields = meta.SFields;
+	auto &methods = meta.Methods, &sMethods = meta.SMethods;
 
 	String metaClass, metaBase, metaField, metaMethod, metaSField, metaSMethod;
 
@@ -260,16 +267,16 @@ String CX_OUTPUT_METADATA(clang_t const& meta)
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
 		s = CX_REPLACE_STR(s, META_RETURN, e.Type);
 		String _t;
-		for(auto& a : e.Args) _t += R"(|")" "+Class::Get<" + a + ">()->getName()" R"(+")";
+		for (auto& a : e.Args) _t += R"(|")" "+Class::Get<" + a + ">()->getName()" R"(+")";
 		s = CX_REPLACE_STR(s, META_TYPE, _t);
 		String t;
-		for(auto& a : e.Args) t += "," + a;
+		for (auto& a : e.Args) t += "," + a;
 		s = CX_REPLACE_STR(s, META_ARGS_TYPE, t);
 		String tt;
-		for(size_t i=0; i<e.Args.size(); ++i) tt += "," + e.Args[i] + " " + "_" + std::to_string(1+i);
+		for (size_t i = 0; i < e.Args.size(); ++i) tt += "," + e.Args[i] + " " + "_" + std::to_string(1 + i);
 		s = CX_REPLACE_STR(s, META_ARGS_CALL, tt);
 		String ttt;
-		for(size_t i=0; i<e.Args.size(); ++i) ttt += String(ttt.empty()?"":",") + "_" + std::to_string(1+i);
+		for (size_t i = 0; i < e.Args.size(); ++i) ttt += String(ttt.empty() ? "" : ",") + "_" + std::to_string(1 + i);
 		s = CX_REPLACE_STR(s, META_ARGS_PASS, ttt);
 		metaMethod += s;
 	}
@@ -280,16 +287,16 @@ String CX_OUTPUT_METADATA(clang_t const& meta)
 		s = CX_REPLACE_STR(s, META_NAME, e.Name);
 		s = CX_REPLACE_STR(s, META_RETURN, e.Type);
 		String _t;
-		for(auto& a : e.Args) _t += R"(|")" "+Class::Get<" + a + ">()->getName()" R"(+")";
+		for (auto& a : e.Args) _t += R"(|")" "+Class::Get<" + a + ">()->getName()" R"(+")";
 		s = CX_REPLACE_STR(s, META_TYPE, _t);
 		String t;
-		for(auto& a : e.Args) t += "," + a;
+		for (auto& a : e.Args) t += "," + a;
 		s = CX_REPLACE_STR(s, META_ARGS_TYPE, t);
 		String tt;
-		for(size_t i=0; i<e.Args.size(); ++i) tt += String(tt.empty()?"":",") + e.Args[i] + " " + "_" + std::to_string(1+i);
+		for (size_t i = 0; i < e.Args.size(); ++i) tt += String(tt.empty() ? "" : ",") + e.Args[i] + " " + "_" + std::to_string(1 + i);
 		s = CX_REPLACE_STR(s, META_ARGS_CALL, tt);
 		String ttt;
-		for(size_t i=0; i<e.Args.size(); ++i) ttt += String(ttt.empty()?"":",") + "_" + std::to_string(1+i);
+		for (size_t i = 0; i < e.Args.size(); ++i) ttt += String(ttt.empty() ? "" : ",") + "_" + std::to_string(1 + i);
 		s = CX_REPLACE_STR(s, META_ARGS_PASS, ttt);
 		metaSMethod += s;
 	}
@@ -327,29 +334,18 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 	switch (node.kind)
 	{
 	case CXCursor_StructDecl:
-		{
-			auto name = clang_getCString(clang_getCursorSpelling(node));
-			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
-			auto& klass = context.Classes[type];
-			klass.Class.Name = type;
-
-			//for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
-			//std::cout << "*Struct '" << type << "'\n";
-
-			context.Depth += 1;
-		} break;
 	case CXCursor_ClassDecl:
 		{
+			context.Depth += 1;
+			if (parent.kind == CXCursor_TypedefDecl || parent.kind == CXCursor_ClassTemplate) result = false;
+			if (parent.kind == CXCursor_TypedefDecl || parent.kind == CXCursor_ClassTemplate) break;
+
 			auto name = clang_getCString(clang_getCursorSpelling(node));
 			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
 			auto& klass = context.Classes[type];
 			klass.Class.Name = type;
-
-			//for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
-			//std::cout << "*Class '" << type << "'\n";
-
-			context.Depth += 1;
-		} break;
+		}
+		break;
 	case CXCursor_CXXBaseSpecifier:
 		{
 			auto name = clang_getCString(clang_getCursorSpelling(node));
@@ -358,7 +354,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			auto& klass = context.Classes[klassName];
 			auto& base = klass.Bases.emplace_back();
 			base.Name = type;
-		} break;
+		}
+		break;
 	case CXCursor_VarDecl:
 		{
 			if (parent.kind == CXCursor_ClassDecl)
@@ -373,13 +370,11 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 					auto& field = klass.SFields.emplace_back();
 					field.Name = name;
 					field.Type = type;
-
-					//for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-					//std::cout << "*SField '" << name << "'\n";
 				}
 			}
 			result = false;
-		} break;
+		}
+		break;
 	case CXCursor_FieldDecl:
 		{
 			if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
@@ -392,12 +387,10 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 				auto& field = klass.Fields.emplace_back();
 				field.Name = name;
 				field.Type = type;
-
-				//for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-				//std::cout << "*Field '" << name << "'\n";
 			}
 			result = false;
-		} break;
+		}
+		break;
 	case CXCursor_CXXMethod:
 		{
 			if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
@@ -409,7 +402,8 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 
 				auto argsNum = clang_Cursor_getNumArguments(node);
 				auto resultType = clang_getCursorResultType(node);
-				auto returnType = clang_getCString(clang_getTypeSpelling(resultType));
+				auto resultNode = clang_getTypeDeclaration(resultType);
+				auto returnType = clang_getCString(clang_getTypeSpelling(clang_isInvalid(resultNode.kind) ? resultType : clang_getCursorType(CX_RESOLVE_TYPE(resultNode))));
 
 				if (clang_CXXMethod_isStatic(node))
 				{
@@ -421,9 +415,6 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 						auto argType = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(clang_Cursor_getArgument(node, i)))));
 						method.Args.emplace_back(argType);
 					}
-
-					//for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-					//std::cout << "*SMethod '" << name << "'\n";
 				}
 				else
 				{
@@ -435,22 +426,23 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 						auto argType = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(clang_Cursor_getArgument(node, i)))));
 						method.Args.emplace_back(argType);
 					}
-
-					//for (auto i = 0; i < context.Depth; ++i) std::cout << '\t';
-					//std::cout << "*Method '" << name << "'\n";
 				}
 			}
 			result = false;
-		} break;
+		}
+		break;
 	default:
 		{
 			//for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
-			//std::cout << clang_getCursorSpelling(node) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(node)) << ", " << clang_getCursorKindSpelling(clang_getCursorKind(parent)) << "\n";
-			result = false;
-		} break;
+			// result = false;
+		}
+		break;
 	}
 
-	return result;
+	std::cout << clang_getCursorSpelling(node) << ", " << clang_getCursorKindSpelling(clang_getCursorKind (node) ) << ", " << clang_getCursorKindSpelling(clang_getCursorKind (parent) ) << "\n";
+
+	return
+		result;
 }
 
 void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
@@ -460,18 +452,17 @@ void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 	switch (node.kind)
 	{
 	case CXCursor_StructDecl:
-		{
-			context.Depth -= 1;
-		} break;
 	case CXCursor_ClassDecl:
 		{
 			context.Depth -= 1;
-
+			if (parent.kind == CXCursor_TypedefDecl || parent.kind == CXCursor_ClassTemplate) break;
 			if (clang_isCursorDefinition(node) == false) break;
 
 			auto name = clang_getCString(clang_getCursorSpelling(node));
 			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
 			auto& klass = context.Classes[type];
+			if (klass.Finish) break;
+			klass.Finish = true;
 
 			CXFile file;
 			unsigned line, column, offset;
@@ -480,24 +471,23 @@ void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			CXString file_name = clang_getFileName(file);
 			auto path = clang_getCString(file_name);
 
-			auto folder = std::filesystem::path(path).parent_path().generic_string();
-			auto baseName = std::filesystem::path(path).stem().generic_string();
-			auto fileName = std::filesystem::path(path).filename().generic_string();
-
-			auto output = folder + "/" + baseName + ".meta.h";
-			if (context.Outputs.insert(output).second)
+			auto include = std::filesystem::path(path).generic_string();
+			if (context.Outputs.insert(include).second)
 			{
-				context.OutputsInOrder.push_back(output);
-				std::filesystem::remove(output);
+				context.OutputsInOrder.push_back(include);
 
 				String content(TEMPLATE_INCLUDE);
-				content = CX_REPLACE_STR(content, META_FILE, fileName);
-				CX_WRITE_FILE(output, content);
+				auto folder = std::filesystem::path(context.Output).parent_path().generic_string();
+				auto relative = std::filesystem::relative(path, folder).generic_string();
+				if (relative.empty()) break;
+				content = CX_REPLACE_STR(content, META_FILE, relative);
+				CX_APPEND_FILE(context.Output, content);
 			}
 
 			auto content = CX_OUTPUT_METADATA(klass);
-			CX_APPEND_FILE(output, content);
-		} break;
+			CX_APPEND_FILE(context.Output, content);
+		}
+		break;
 	default: break;
 	}
 }

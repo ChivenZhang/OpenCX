@@ -24,9 +24,11 @@
 #define META_ARGS_CALL "${ARGS_CALL}"
 #define META_ARGS_PASS "${ARGS_PASS}"
 
-#define TEMPLATE_INCLUDE R"(#pragma once
+#define TEMPLATE_HEAD R"(#pragma once
 #include <OpenCX/Class.h>
-#include ")" META_FILE R"("
+)"
+
+#define TEMPLATE_INCLUDE R"(#include ")" META_FILE R"("
 )"
 
 #define TEMPLATE_BASE R"(
