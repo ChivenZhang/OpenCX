@@ -21,7 +21,10 @@
 struct class_t
 {
 	String Name;
+	String Type;
+	bool Output = false;
 	bool Struct = false;
+	bool Typedef = false;
 };
 
 struct field_t
@@ -42,7 +45,6 @@ struct method_t
 struct clang_t
 {
 	class_t Class;
-	bool Finish = false;
 	List<class_t> Bases;
 	List<field_t> Fields, SFields;
 	List<method_t> Methods, SMethods;
@@ -337,28 +339,37 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 	case CXCursor_ClassDecl:
 		{
 			context.Depth += 1;
-			if (parent.kind == CXCursor_TypedefDecl || parent.kind == CXCursor_ClassTemplate) result = false;
-			if (parent.kind == CXCursor_TypedefDecl || parent.kind == CXCursor_ClassTemplate) break;
+			if (parent.kind == CXCursor_ClassTemplate || parent.kind == CXCursor_TypedefDecl) result = false;
+			else
+			{
+				auto name = clang_getCString(clang_getCursorSpelling(node));
+				auto type = clang_getCString(clang_getTypeSpelling(clang_getCanonicalType(clang_getCursorType(CX_RESOLVE_TYPE(node)))));
+				auto& klass = context.Classes[type];
+				klass.Class.Name = type;
+				klass.Class.Type = type;
+				klass.Class.Struct = (node.kind == CXCursor_StructDecl);
 
-			auto name = clang_getCString(clang_getCursorSpelling(node));
-			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
-			auto& klass = context.Classes[type];
-			klass.Class.Name = type;
+				if (node.kind == CXCursor_ClassDecl) klass.Class.Name = String("class ") + type;
+				if (node.kind == CXCursor_StructDecl) klass.Class.Name = String("struct ") + type;
+			}
 		}
 		break;
 	case CXCursor_CXXBaseSpecifier:
 		{
-			auto name = clang_getCString(clang_getCursorSpelling(node));
-			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
-			auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
-			auto& klass = context.Classes[klassName];
-			auto& base = klass.Bases.emplace_back();
-			base.Name = type;
+			if (parent.kind == CXCursor_StructDecl || parent.kind == CXCursor_ClassDecl)
+			{
+				auto name = clang_getCString(clang_getCursorSpelling(node));
+				auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
+				auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
+				auto& klass = context.Classes[klassName];
+				auto& base = klass.Bases.emplace_back();
+				base.Name = type;
+			}
 		}
 		break;
 	case CXCursor_VarDecl:
 		{
-			if (parent.kind == CXCursor_ClassDecl)
+			if (parent.kind == CXCursor_StructDecl || parent.kind == CXCursor_ClassDecl)
 			{
 				if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
 				{
@@ -377,72 +388,70 @@ bool CX_ENTER_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 		break;
 	case CXCursor_FieldDecl:
 		{
-			if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
+			if (parent.kind == CXCursor_StructDecl || parent.kind == CXCursor_ClassDecl)
 			{
-				auto name = clang_getCString(clang_getCursorSpelling(node));
-				auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
-				auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
-				auto& klass = context.Classes[klassName];
+				if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
+				{
+					auto name = clang_getCString(clang_getCursorSpelling(node));
+					auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
+					auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
+					auto& klass = context.Classes[klassName];
 
-				auto& field = klass.Fields.emplace_back();
-				field.Name = name;
-				field.Type = type;
+					auto& field = klass.Fields.emplace_back();
+					field.Name = name;
+					field.Type = type;
+				}
 			}
 			result = false;
 		}
 		break;
 	case CXCursor_CXXMethod:
 		{
-			if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
+			if (parent.kind == CXCursor_StructDecl || parent.kind == CXCursor_ClassDecl)
 			{
-				auto name = clang_getCString(clang_getCursorSpelling(node));
-				auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
-				auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
-				auto& klass = context.Classes[klassName];
-
-				auto argsNum = clang_Cursor_getNumArguments(node);
-				auto resultType = clang_getCursorResultType(node);
-				auto resultNode = clang_getTypeDeclaration(resultType);
-				auto returnType = clang_getCString(clang_getTypeSpelling(clang_isInvalid(resultNode.kind) ? resultType : clang_getCursorType(CX_RESOLVE_TYPE(resultNode))));
-
-				if (clang_CXXMethod_isStatic(node))
+				if (clang_getCXXAccessSpecifier(node) == CX_CXXPublic)
 				{
-					auto& method = klass.SMethods.emplace_back();
-					method.Name = name;
-					method.Type = returnType;
-					for (auto i = 0; i < argsNum; ++i)
+					auto name = clang_getCString(clang_getCursorSpelling(node));
+					auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
+					auto klassName = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(parent))));
+					auto& klass = context.Classes[klassName];
+
+					auto argsNum = clang_Cursor_getNumArguments(node);
+					auto resultType = clang_getCursorResultType(node);
+					auto returnType = clang_getCString(clang_getTypeSpelling(resultType));
+
+					if (clang_CXXMethod_isStatic(node))
 					{
-						auto argType = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(clang_Cursor_getArgument(node, i)))));
-						method.Args.emplace_back(argType);
+						auto& method = klass.SMethods.emplace_back();
+						method.Name = name;
+						method.Type = returnType;
+						for (auto i = 0; i < argsNum; ++i)
+						{
+							auto argType = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(clang_Cursor_getArgument(node, i)))));
+							method.Args.emplace_back(argType);
+						}
 					}
-				}
-				else
-				{
-					auto& method = klass.Methods.emplace_back();
-					method.Name = name;
-					method.Type = returnType;
-					for (auto i = 0; i < argsNum; ++i)
+					else
 					{
-						auto argType = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(clang_Cursor_getArgument(node, i)))));
-						method.Args.emplace_back(argType);
+						auto& method = klass.Methods.emplace_back();
+						method.Name = name;
+						method.Type = returnType;
+						for (auto i = 0; i < argsNum; ++i)
+						{
+							auto argType = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(clang_Cursor_getArgument(node, i)))));
+							method.Args.emplace_back(argType);
+						}
 					}
 				}
 			}
 			result = false;
 		}
 		break;
-	default:
-		{
-			//for (auto i=0; i< context.Depth; ++i) std::cout << '\t';
-			// result = false;
-		}
-		break;
 	}
 
-	std::cout << clang_getCursorSpelling(node) << ", " << clang_getCursorKindSpelling(clang_getCursorKind (node) ) << ", " << clang_getCursorKindSpelling(clang_getCursorKind (parent) ) << "\n";
+	// std::cout << clang_getCursorSpelling(node) << ", " << clang_getCursorKindSpelling(clang_getCursorKind (node) ) << ", " << clang_getCursorKindSpelling(clang_getCursorKind (parent) ) << "\n";
 
-	return
-		result;
+	return result;
 }
 
 void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
@@ -455,14 +464,15 @@ void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 	case CXCursor_ClassDecl:
 		{
 			context.Depth -= 1;
-			if (parent.kind == CXCursor_TypedefDecl || parent.kind == CXCursor_ClassTemplate) break;
 			if (clang_isCursorDefinition(node) == false) break;
+			if (parent.kind == CXCursor_ClassTemplate || parent.kind == CXCursor_TypedefDecl) break;
 
 			auto name = clang_getCString(clang_getCursorSpelling(node));
 			auto type = clang_getCString(clang_getTypeSpelling(clang_getCursorType(CX_RESOLVE_TYPE(node))));
 			auto& klass = context.Classes[type];
-			if (klass.Finish) break;
-			klass.Finish = true;
+			if (klass.Class.Output) break;
+			if (klass.Class.Typedef) klass.Class.Name = klass.Class.Type;
+			klass.Class.Output = true;
 
 			CXFile file;
 			unsigned line, column, offset;
@@ -488,6 +498,5 @@ void CX_EXIT_TRAVERSE(CXCursor node, CXCursor parent, CXClientData client)
 			CX_APPEND_FILE(context.Output, content);
 		}
 		break;
-	default: break;
 	}
 }
